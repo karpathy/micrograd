@@ -1,5 +1,5 @@
 
-# MicroGrad
+# micrograd
 
 ![awww](puppy.jpg)
 
