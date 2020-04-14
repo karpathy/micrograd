@@ -1,6 +1,5 @@
 import torch
 from micrograd.engine import Value
-from micrograd import nn
 
 def test_sanity_check():
 
