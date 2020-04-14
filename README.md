@@ -24,7 +24,7 @@ print(x.grad) # prints 62.0 - i.e. the numerical value of dy / dx
 
 ### Tracing / visualization
 
-Have a look at the jupyter notebook `trace_graph.py` to also produce graphviz visualizations. E.g. this one is of a simple 2D neuron, arrived at by calling `draw_dot` on the code below, and it shows both the data (top number in each node) and the gradient (bottom number in each node).
+Have a look at the jupyter notebook `trace_graph.ipynb` to also produce graphviz visualizations. E.g. this one is of a simple 2D neuron, arrived at by calling `draw_dot` on the code below, and it shows both the data (top number in each node) and the gradient (bottom number in each node).
 
 ```python
 from micrograd import nn
