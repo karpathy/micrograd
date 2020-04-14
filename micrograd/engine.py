@@ -8,7 +8,6 @@ class Value:
         # internal variables used for autograd graph construction
         self._backward = lambda: None
         self._prev = set(_children)
-        self._visited = False
 
     def __add__(self, other):
         other = other if isinstance(other, Value) else Value(other)
@@ -45,9 +44,10 @@ class Value:
 
         # topological order all of the children in the graph
         topo = []
+        visited = set()
         def build_topo(v):
-            if not v._visited:
-                v._visited = True
+            if v not in visited:
+                visited.add(v)
                 for child in v._prev:
                     build_topo(child)
                 topo.append(v)
