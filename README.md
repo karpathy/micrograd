@@ -16,7 +16,7 @@ x = Value(1.0)
 z = 2 * x + 2 + x
 q = z + z * x
 h = z * z
-y = z * z + q + q * x
+y = h + q + q * x
 print(y.data) # prints 45.0
 y.backward()
 print(x.grad) # prints 62.0 - i.e. the numerical value of dy / dx
