@@ -34,7 +34,7 @@ print(f'{b.grad:.4f}') # prints 645.5773, i.e. the numerical value of dg/db
 
 ### Tracing / visualization
 
-Have a look at the jupyter notebook `trace_graph.ipynb` to also produce graphviz visualizations. E.g. this one is of a simple 2D neuron, arrived at by calling `draw_dot` on the code below, and it shows both the data (top number in each node) and the gradient (bottom number in each node).
+For added convenience, the notebook `trace_graph.ipynb` produces graphviz visualizations. E.g. this one below is of a simple 2D neuron, arrived at by calling `draw_dot` on the code below, and it shows both the data (left number in each node) and the gradient (right number in each node).
 
 ```python
 from micrograd import nn
@@ -44,4 +44,4 @@ y = n(x)
 dot = draw_dot(y)
 ```
 
-![2d neuron](gout.png)
+![2d neuron](gout.svg)
