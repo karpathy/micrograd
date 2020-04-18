@@ -53,10 +53,12 @@ jobs:
       run: >
         pip install torch==1.4.0+cpu
         -f https://download.pytorch.org/whl/torch_stable.html
-      run: pip install -U numpy
     - name: Install PyTorch on MacOS
       if: matrix.operating-system == 'macos-latest'
-      run: pip install torch==1.4.0
+      run: |
+        pip install torch==1.4.0
+    - name: Install Numpy
+    # fix 'ImportError: numpy.core.multiarray failed to import'
       run: pip install -U numpy
     - name: Lint with flake8
       run: |
