@@ -53,9 +53,11 @@ jobs:
       run: >
         pip install torch==1.4.0+cpu
         -f https://download.pytorch.org/whl/torch_stable.html
+      run: pip install -U numpy
     - name: Install PyTorch on MacOS
       if: matrix.operating-system == 'macos-latest'
       run: pip install torch==1.4.0
+      run: pip install -U numpy
     - name: Lint with flake8
       run: |
         pip install flake8
