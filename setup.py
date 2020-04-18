@@ -7,6 +7,7 @@ setuptools.setup(
     name="micrograd",
     version="0.1.0",
     author="Andrej Karpathy",
+    license="MIT",
     author_email="andrej.karpathy@gmail.com",
     description="A tiny scalar-valued autograd engine with a small PyTorch-like neural network library on top.",
     long_description=long_description,
