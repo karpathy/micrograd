@@ -69,8 +69,11 @@ class Value:
         for v in reversed(topo):
             v._backward()
 
-    def __radd__(self, other): # self + other
-        return self.__add__(other)
+    def __neg__(self): # -self
+        return self * -1
+
+    def __radd__(self, other): # other + self
+        return self + other
 
     def __sub__(self, other): # self - other
         return self + (-other)
@@ -78,11 +81,8 @@ class Value:
     def __rsub__(self, other): # other - self
         return other + (-self)
 
-    def __neg__(self): # -self
-        return self * -1
-
     def __rmul__(self, other): # other * self
-        return self.__mul__(other)
+        return self * other
 
     def __truediv__(self, other): # self / other
         return self * other**-1
