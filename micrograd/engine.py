@@ -6,7 +6,7 @@ class Value:
         self.data = data
         self.grad = 0
         # internal variables used for autograd graph construction
-        self._backward = lambda *a, **k: None
+        self._backward = lambda: None
         self._prev = set(_children)
         self._op = _op # the op that produced this node, for graphviz / debugging / etc
 
@@ -28,7 +28,6 @@ class Value:
         def _backward():
             self.grad += other * out.grad
             other.grad += self * out.grad
-
         out._backward = _backward
 
         return out
