@@ -14,7 +14,7 @@ class Value:
         other = other if isinstance(other, Value) else Value(other)
         out = Value(self.data + other.data, (self, other), '+')
 
-        def _backward(keep_graph=False):
+        def _backward():
             self.grad += out.grad
             other.grad += out.grad
         out._backward = _backward
@@ -25,13 +25,10 @@ class Value:
         other = other if isinstance(other, Value) else Value(other)
         out = Value(self.data * other.data, (self, other), '*')
 
-        def _backward(keep_graph=False):
-            if keep_graph:
-                self.grad += other * out.grad
-                other.grad += self * out.grad
-            else:
-                self.grad += other.data * out.grad
-                other.grad += self.data * out.grad
+        def _backward():
+            self.grad += other * out.grad
+            other.grad += self * out.grad
+
         out._backward = _backward
 
         return out
@@ -41,7 +38,7 @@ class Value:
         out = Value(self.data**other, (self,), f'**{other}')
 
         def _backward():
-            self.grad += (other * self.data**(other-1)) * out.grad
+            self.grad += (other * self**(other-1)) * out.grad
         out._backward = _backward
 
         return out
@@ -49,30 +46,33 @@ class Value:
     def relu(self):
         out = Value(0 if self.data < 0 else self.data, (self,), 'ReLU')
 
-        def _backward(keep_graph=False):
+        def _backward():
             self.grad += (out.data > 0) * out.grad
         out._backward = _backward
 
         return out
 
-    def backward(self, keep_graph=False, zero_grad=True):
+    def backward(self):
         # topological order all of the children in the graph
         topo = []
         visited = set()
         def build_topo(v):
             if v not in visited:
                 visited.add(v)
-                if zero_grad:
-                    v.grad = 0
+                # Set to grad to zero to prevent previous values effecting the
+                # result.
+                v.grad = 0
                 for child in v._prev:
                     build_topo(child)
                 topo.append(v)
         build_topo(self)
 
         # go one variable at a time and apply the chain rule to get its gradient
-        self.grad = Value(1) if keep_graph else 1
+        # Making grad a `Value` type allows us to track backprop and do higher
+        # order gradients.
+        self.grad = Value(1)
         for v in reversed(topo):
-            v._backward(keep_graph=keep_graph)
+            v._backward()
 
     def __neg__(self): # -self
         return self * -1

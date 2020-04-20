@@ -65,3 +65,48 @@ def test_more_ops():
     # backward pass went well
     assert abs(amg.grad - apt.grad.item()) < tol
     assert abs(bmg.grad - bpt.grad.item()) < tol
+
+def test_higher_order():
+    x = Value(3)
+    y = x**3
+    # This might seem redundant, but better we do this to ensure gradient is
+    # 0 before backward pass.
+    x.grad = 0
+    y.backward()
+    dy = x.grad
+    assert dy.data == (x.data**2) * 3
+    x.grad = 0
+    dy.backward()
+    d2y = x.grad
+    assert d2y.data == x.data*6
+    x.grad = 0
+    d2y.backward()
+    d3y = x.grad
+    assert d3y.data == 6
+    x.grad = 0
+    d3y.backward()
+    d4y = x.grad
+    assert d4y.data == 0
+
+def test_higher_order():
+    x = Value(3)
+    y = Value(2)
+    f = 2*x*x*y+y*x
+    x.grad = y.grad = 0
+    f.backward()
+    dfx = x.grad
+    dfy = y.grad
+    assert dfx.data == 4*x.data*y.data + y.data
+    assert dfy.data == 2*x.data*x.data + x.data
+    x.grad = y.grad = 0
+    dfx.backward()
+    dfxx = x.grad
+    dfxy = y.grad
+    x.grad = y.grad = 0
+    dfy.backward()
+    dfyx = x.grad
+    dfyy = y.grad
+    print(dfxx,dfyx,dfyy,dfxy)
+    assert dfyx.data == dfxy.data == (4*x.data + 1)
+    assert dfyy == 0
+    assert dfxx.data == 4*y.data
