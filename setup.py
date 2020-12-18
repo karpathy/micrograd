@@ -14,7 +14,7 @@ setuptools.setup(
     url="https://github.com/karpathy/micrograd",
     packages=setuptools.find_packages(),
     install_requires=[
-        'numpy==1.19.3', 'pytest', 'ipykernel', 'matplotlib', 'sklearn', 
+        'numpy==1.19.3', 'pytest', 'graphviz', 'ipykernel', 'matplotlib', 'sklearn', 
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
