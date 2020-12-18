@@ -2,72 +2,57 @@
 class Value:
     """ stores a single scalar value and its gradient """
 
-    def __init__(self, data, _children=(), _op=''):
+    def __init__(self, data, _children=(), _op='', requires_grad=False, gradient_fn=None):
         self.data = data
         self.grad = 0
         # internal variables used for autograd graph construction
-        self._backward = lambda: None
-        self._prev = set(_children)
+        self._prev = _children
         self._op = _op # the op that produced this node, for graphviz / debugging / etc
+        self.requires_grad = requires_grad
+        self.gradient_fn = None if not gradient_fn else lambda: gradient_fn(self)
 
     def __add__(self, other):
-        other = other if isinstance(other, Value) else Value(other)
-        out = Value(self.data + other.data, (self, other), '+')
-
-        def _backward():
-            self.grad += out.grad
-            other.grad += out.grad
-        out._backward = _backward
-
-        return out
+        if not isinstance(other, Value): 
+            other = Value(other)
+        requires_grad = self.requires_grad or other.requires_grad
+        gradient_fn = None if not requires_grad else lambda _: (1, 1)
+        return Value(self.data + other.data, (self, other), '+', requires_grad, gradient_fn)
 
     def __mul__(self, other):
-        other = other if isinstance(other, Value) else Value(other)
-        out = Value(self.data * other.data, (self, other), '*')
-
-        def _backward():
-            self.grad += other.data * out.grad
-            other.grad += self.data * out.grad
-        out._backward = _backward
-
-        return out
+        if not isinstance(other, Value): 
+            other = Value(other)
+        requires_grad = self.requires_grad or other.requires_grad
+        gradient_fn = None if not requires_grad else lambda v: (v._prev[1].data, v._prev[0].data)
+        return Value(self.data * other.data, (self, other), '*', requires_grad, gradient_fn)
 
     def __pow__(self, other):
         assert isinstance(other, (int, float)), "only supporting int/float powers for now"
-        out = Value(self.data**other, (self,), f'**{other}')
-
-        def _backward():
-            self.grad += (other * self.data**(other-1)) * out.grad
-        out._backward = _backward
-
-        return out
+        gradient_fn = None if not self.requires_grad else lambda v: (other * v._prev[0].data**(other-1),)
+        return Value(self.data**other, (self,), f'**{other}', self.requires_grad, gradient_fn)
 
     def relu(self):
-        out = Value(0 if self.data < 0 else self.data, (self,), 'ReLU')
+        gradient_fn = None if not self.requires_grad else lambda v: (v.data > 0,)
+        return Value(max(0, self.data), (self,), 'ReLU', self.requires_grad, gradient_fn)
 
-        def _backward():
-            self.grad += (out.data > 0) * out.grad
-        out._backward = _backward
-
-        return out
+    def _toposort(self):
+        postorder = []
+        visited = set()
+        def dfs(node):
+            if node.requires_grad and node._prev and node not in visited:
+                visited.add(node)
+                for child in node._prev:
+                    dfs(child)
+                postorder.append(node)
+        dfs(self)
+        return reversed(postorder)
 
     def backward(self):
-
-        # topological order all of the children in the graph
-        topo = []
-        visited = set()
-        def build_topo(v):
-            if v not in visited:
-                visited.add(v)
-                for child in v._prev:
-                    build_topo(child)
-                topo.append(v)
-        build_topo(self)
-
         # go one variable at a time and apply the chain rule to get its gradient
         self.grad = 1
-        for v in reversed(topo):
-            v._backward()
+        for v in self._toposort():
+            for child, local_grad in zip(v._prev, v.gradient_fn()):
+                if child.requires_grad:
+                    child.grad += local_grad * v.grad
 
     def __neg__(self): # -self
         return self * -1

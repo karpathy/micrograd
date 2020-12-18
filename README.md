@@ -18,8 +18,8 @@ Below is a slightly contrived example showing a number of possible supported ope
 ```python
 from micrograd.engine import Value
 
-a = Value(-4.0)
-b = Value(2.0)
+a = Value(-4.0, requires_grad=True)
+b = Value(2.0, requires_grad=True)
 c = a + b
 d = a * b + b**3
 c += c + 1
