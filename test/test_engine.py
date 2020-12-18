@@ -4,6 +4,7 @@ from micrograd.engine import Value
 def test_sanity_check():
 
     x = Value(-4.0)
+    x.requires_grad = True
     z = 2 * x + 2 + x
     q = z.relu() + z * x
     h = (z * z).relu()
@@ -29,6 +30,8 @@ def test_more_ops():
 
     a = Value(-4.0)
     b = Value(2.0)
+    a.requires_grad = True
+    b.requires_grad = True
     c = a + b
     d = a * b + b**3
     c += c + 1
