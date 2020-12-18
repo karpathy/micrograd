@@ -2,54 +2,30 @@
 class Value:
     """ stores a single scalar value and its gradient """
 
-    def __init__(self, data, _children=(), _op=''):
+    def __init__(self, data, _children=(), _op='', _backward=None):
         self.data = data
         self.grad = 0
         # internal variables used for autograd graph construction
-        self._backward = None
         self._prev = _children
         self._op = _op # the op that produced this node, for graphviz / debugging / etc
+        self._backward = _backward
 
     def __add__(self, other):
         if not isinstance(other, Value): 
             other = Value(other)
-        out = Value(self.data + other.data, (self, other), '+')
-
-        def _backward(_):
-            return (1, 1)
-        out._backward = _backward
-
-        return out
+        return Value(self.data + other.data, (self, other), '+', lambda _: (1, 1))
 
     def __mul__(self, other):
         if not isinstance(other, Value): 
             other = Value(other)
-        out = Value(self.data * other.data, (self, other), '*')
-
-        def _backward(n):
-            return (n._prev[1].data, n._prev[0].data)
-        out._backward = _backward
-
-        return out
+        return Value(self.data * other.data, (self, other), '*', lambda n: (n._prev[1].data, n._prev[0].data))
 
     def __pow__(self, other):
         assert isinstance(other, (int, float)), "only supporting int/float powers for now"
-        out = Value(self.data**other, (self,), f'**{other}')
-
-        def _backward(n):
-            return (other * n._prev[0].data**(other-1),)
-        out._backward = _backward
-
-        return out
+        return Value(self.data**other, (self,), f'**{other}', lambda n: (other * n._prev[0].data**(other-1),))
 
     def relu(self):
-        out = Value(max(0, self.data), (self,), 'ReLU')
-
-        def _backward(n):
-            return (n.data > 0,)
-        out._backward = _backward
-
-        return out
+        return Value(max(0, self.data), (self,), 'ReLU', lambda n: (n.data > 0,))
 
     def _toposort(self):
         postorder = []
