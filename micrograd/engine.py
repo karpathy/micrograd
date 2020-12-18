@@ -51,22 +51,22 @@ class Value:
 
         return out
 
-    def backward(self):
-
-        # topological order all of the children in the graph
-        topo = []
+    def _toposort(self):
+        postorder = []
         visited = set()
-        def build_topo(v):
-            if v not in visited:
-                visited.add(v)
-                for child in v._prev:
-                    build_topo(child)
-                topo.append(v)
-        build_topo(self)
+        def dfs(node):
+            if node not in visited:
+                visited.add(node)
+                for child in node._prev:
+                    dfs(child)
+                postorder.append(node)
+        dfs(self)
+        return reversed(postorder)
 
+    def backward(self):
         # go one variable at a time and apply the chain rule to get its gradient
         self.grad = 1
-        for v in reversed(topo):
+        for v in self._toposort():
             v._backward()
 
     def __neg__(self): # -self
