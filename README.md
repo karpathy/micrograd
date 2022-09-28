@@ -49,3 +49,8 @@ dot = draw_dot(y)
 ```
 
 ![2d neuron](gout.svg)
+
+
+### .NET C# version
+
+There is a .NET C# version - [NMicrograd](https://github.com/tymtam2/nmicrograd) - which I don't maintain and I'm not affiliated with.  
