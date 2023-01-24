@@ -65,13 +65,12 @@ python -m pytest
 ```
 
 
-### Running the demo jupyter notebook
-``` 
+### Running the demo jupyter notebook o
+```
 brew install jupyter
 jupyter notebook
 virtualenv testenv
 python3 -m ipykernel install --user --name testenv
-source testenv/bin/activate
 brew install graphviz
 pip install numpy
 python3 setup.py install
