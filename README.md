@@ -65,18 +65,22 @@ python -m pytest
 ```
 
 
-### Running the demo jupyter notebook o
+### Running the demo jupyter notebook on mac-osx
 ```
-brew install jupyter
-jupyter notebook
-virtualenv testenv
-python3 -m ipykernel install --user --name testenv
-brew install graphviz
-pip install numpy
-python3 setup.py install
-pip install matplotlib
-pip install sklearn
-pip install scikit-learn
+$brew install jupyter
+git clone https://github.com/karpathy/micrograd
+$cd micrograd
+$jupyter notebook
+$virtualenv testenv
+$source testenv/bin/activate
+
+(testenv) -> python3 -m ipykernel install --user --name testenv
+(testenv) -> brew install graphviz
+(testenv) -> pip install numpy
+(testenv) -> python3 setup.py install
+(testenv) -> pip install matplotlib
+(testenv) -> pip install sklearn
+(testenv) -> (testenv) -> pip install scikit-learn
 
 ```
 ### Make sure to change the ipykernel to testenv
