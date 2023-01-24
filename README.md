@@ -64,6 +64,26 @@ To run the unit tests you will have to install [PyTorch](https://pytorch.org/), 
 python -m pytest
 ```
 
+
+### Running the demo jupyter notebook
+``` 
+brew install jupyter
+jupyter notebook
+virtualenv testenv
+python3 -m ipykernel install --user --name testenv
+source testenv/bin/activate
+brew install graphviz
+pip install numpy
+python3 setup.py install
+pip install matplotlib
+pip install sklearn
+pip install scikit-learn
+
+```
+### Make sure to change the ipykernel to testenv
+<img width="941" alt="image" src="https://user-images.githubusercontent.com/7585681/214224911-42c14d3e-0c0c-4474-98a2-5a337436b979.png">
+
+
 ### License
 
 MIT
