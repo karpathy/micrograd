@@ -64,6 +64,29 @@ To run the unit tests you will have to install [PyTorch](https://pytorch.org/), 
 python -m pytest
 ```
 
+
+### Running the demo jupyter notebook on mac-osx
+```
+$brew install jupyter
+git clone https://github.com/karpathy/micrograd
+$cd micrograd
+$jupyter notebook
+$virtualenv testenv
+$source testenv/bin/activate
+
+(testenv) -> python3 -m ipykernel install --user --name testenv
+(testenv) -> brew install graphviz
+(testenv) -> pip install numpy
+(testenv) -> python3 setup.py install
+(testenv) -> pip install matplotlib
+(testenv) -> pip install sklearn
+(testenv) -> (testenv) -> pip install scikit-learn
+
+```
+### Make sure to change the ipykernel to testenv
+<img width="941" alt="image" src="https://user-images.githubusercontent.com/7585681/214224911-42c14d3e-0c0c-4474-98a2-5a337436b979.png">
+
+
 ### License
 
 MIT
