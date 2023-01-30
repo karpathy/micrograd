@@ -63,6 +63,11 @@ To run the unit tests you will have to install [PyTorch](https://pytorch.org/), 
 ```bash
 python -m pytest
 ```
+### Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=karpathy/micrograd&type=Date)](https://star-history.com/#karpathy/micrograd&Date)
+
+
 
 ### License
 
