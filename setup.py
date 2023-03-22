@@ -1,5 +1,6 @@
-import setuptools
 from pathlib import Path
+
+import setuptools
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -11,7 +12,10 @@ with open(Path(BASE_DIR, "requirements.txt"), "r") as file:
 
 docs_packages = ["mkdocs==1.3.0", "mkdocstrings==0.18.1"]
 style_packages = ["black==23.1.0", "flake8==6.0.0", "isort==5.12.0"]
-test_packages = ["pytest==7.2.2", "pytest-cov"] #, "great-expectations==0.15.15"]
+test_packages = [
+    "pytest==7.2.2",
+    "pytest-cov",
+]  # , "great-expectations==0.15.15"]
 
 
 setuptools.setup(
@@ -32,7 +36,10 @@ setuptools.setup(
     python_requires=">=3.6",
     install_requires=[required_packages],
     extras_require={
-        "dev": docs_packages + style_packages + test_packages + ["pre-commit==2.19.0"],
+        "dev": docs_packages
+        + style_packages
+        + test_packages
+        + ["pre-commit==2.19.0"],
         "docs": docs_packages,
         "test": test_packages,
     },
