@@ -1,0 +1,2 @@
+numpy
+torch=1.13

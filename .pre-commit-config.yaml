@@ -23,6 +23,13 @@ repos:
   #     # list of definitions and supported hooks: https://gitlab.com/smop/pre-commit-hooks
   #     - id: check-poetry             # Validates the structure of the pyproject.toml file
 
+  # black python autoformatting
+  # - repo: https://github.com/psf/black
+  #   rev: 23.1.0
+  #   hooks:
+  #     - id: black
+    # additional configuration of black in pyproject.toml
+
   # isort
   # - repo: https://github.com/PyCQA/isort
   #   rev: 5.12.0
@@ -31,23 +38,16 @@ repos:
   #     - id: isort             # Validates the structure of the pyproject.toml file
 
 
-  # black python autoformatting
-  - repo: https://github.com/psf/black
-    rev: 23.1.0
-    hooks:
-      - id: black
-    # additional configuration of black in pyproject.toml
-
   # flake8 python linter with all the fixins
-  - repo: https://github.com/PyCQA/flake8
-    rev: 6.0.0
-    hooks:
-      - id: flake8
-        # exclude:
-        additional_dependencies: [
-          flake8-annotations, flake8-bandit, flake8-bugbear, flake8-black, flake8-docstrings,
-          flake8-import-order, darglint, mypy, pycodestyle, pydocstyle]
-        args: ["--config", ".flake8"]
+  # - repo: https://github.com/PyCQA/flake8
+  #   rev: 6.0.0
+  #   hooks:
+  #     - id: flake8
+  #       # exclude:
+  #       additional_dependencies: [
+  #         flake8-annotations, flake8-bandit, flake8-bugbear, flake8-black, flake8-docstrings,
+  #         flake8-import-order, darglint, mypy, pycodestyle, pydocstyle]
+  #       args: ["--config", ".flake8"]
     # additional configuration of flake8 and extensions in .flake8
 
   # shellcheck-py for linting shell files
