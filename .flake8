@@ -1,0 +1,48 @@
+[flake8]
+select = ANN,B,B9,BLK,C,D,E,F,I,S,W
+  # only check selected error codes
+max-complexity = 12
+  # C9 - flake8 McCabe Complexity checker -- threshold
+max-line-length = 120
+  # E501 - flake8 -- line length too long, actually handled by black
+extend-ignore =
+  # E W - flake8 PEP style check
+    E203,E402,E501,W503,
+    # whitespace, import, line length, binary operator line breaks
+  # S - flake8-bandit safety check
+    S101,S311,S105,
+    # assert removed in bytecode, pRNG not secure, hardcoded password
+  # ANN - flake8-annotations type annotation check
+    ANN,ANN002,ANN003,ANN101,ANN102,ANN202,
+    # ignore all for now, but always ignore some
+  # D1 - flake8-docstrings docstring style check
+    D100,D102,D103,D104,D105,
+    # missing docstrings
+  # D2 D4 - flake8-docstrings docstring style check
+    D200,D205,D400,D401,
+    # whitespace issues and first line content
+  # DAR - flake8-darglint docstring correctness check
+    DAR103,
+    # mismatched or missing type in docstring
+application-import-names = app_gradio,text_recognizer,tests,training
+  # flake8-import-order: which names are first party?
+import-order-style = google
+  # flake8-import-order: which import order style guide do we use?
+docstring-convention = numpy
+  # flake8-docstrings: which docstring style guide do we use?
+strictness = short
+  # darglint: how "strict" are we with docstring completeness?
+docstring-style = numpy
+  # darglint: which docstring style guide do we use?
+suppress-none-returning = true
+  # flake8-annotations: do we allow un-annotated Nones in returns?
+mypy-init-return = true
+  # flake8-annotations: do we allow init to have no return annotation?
+per-file-ignores =
+  # list of case-by-case ignores, see files for details
+  */__init__.py:F401,I
+  */data/*.py:DAR
+  data/*.py:F,I
+  *text_recognizer/util.py:DAR101,F401
+  *training/run_experiment.py:I202
+  *app_gradio/app.py:I202

@@ -1,0 +1,57 @@
+repos:
+  # a set of useful Python-based pre-commit hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      # list of definitions and supported hooks: https://pre-commit.com/hooks.html
+      - id: trailing-whitespace      # removes any whitespace at the ends of lines
+      - id: check-toml               # check toml syntax by loading all toml files
+      - id: check-yaml               # check yaml syntax by loading all yaml files
+      - id: check-json               # check-json syntax by loading all json files
+      - id: check-merge-conflict     # check for files with merge conflict strings
+        args: ['--assume-in-merge']  #  and run this check even when not explicitly in a merge
+      - id: check-added-large-files  # check that no "large" files have been added
+        args: ['--maxkb=10240']      #  where large means 10MB+, as in Hugging Face's git server
+      - id: debug-statements         # check for python debug statements (import pdb, breakpoint, etc.)
+      - id: detect-private-key       # checks for private keys (BEGIN X PRIVATE KEY, etc.)
+
+
+  # pyproject.toml syntax check
+  # - repo: https://gitlab.com/smop/pre-commit-hooks
+  #   rev: v1.0.0
+  #   hooks:
+  #     # list of definitions and supported hooks: https://gitlab.com/smop/pre-commit-hooks
+  #     - id: check-poetry             # Validates the structure of the pyproject.toml file
+
+  # isort
+  # - repo: https://github.com/PyCQA/isort
+  #   rev: 5.12.0
+  #   hooks:
+  #     # list of definitions and supported hooks: https://github.com/PyCQA/isort
+  #     - id: isort             # Validates the structure of the pyproject.toml file
+
+
+  # black python autoformatting
+  - repo: https://github.com/psf/black
+    rev: 23.1.0
+    hooks:
+      - id: black
+    # additional configuration of black in pyproject.toml
+
+  # flake8 python linter with all the fixins
+  - repo: https://github.com/PyCQA/flake8
+    rev: 6.0.0
+    hooks:
+      - id: flake8
+        # exclude:
+        additional_dependencies: [
+          flake8-annotations, flake8-bandit, flake8-bugbear, flake8-black, flake8-docstrings,
+          flake8-import-order, darglint, mypy, pycodestyle, pydocstyle]
+        args: ["--config", ".flake8"]
+    # additional configuration of flake8 and extensions in .flake8
+
+  # shellcheck-py for linting shell files
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.9.0.2
+    hooks:
+      - id: shellcheck

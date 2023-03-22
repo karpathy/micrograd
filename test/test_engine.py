@@ -1,8 +1,9 @@
 import torch
+
 from micrograd.engine import Value
 
-def test_sanity_check():
 
+def test_sanity_check():
     x = Value(-4.0)
     z = 2 * x + 2 + x
     q = z.relu() + z * x
@@ -25,8 +26,8 @@ def test_sanity_check():
     # backward pass went well
     assert xmg.grad == xpt.grad.item()
 
-def test_more_ops():
 
+def test_more_ops():
     a = Value(-4.0)
     b = Value(2.0)
     c = a + b
