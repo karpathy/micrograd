@@ -29,4 +29,4 @@ jobs:
         run: |
           python3 -m pip install -e ".[test]" --no-cache-dir
       - name: Execute tests
-        run: pytest tests/ #--ignore tests/code/test_main.py --ignore tests/code/test_data.py
+        run: pytest tests/ --doctest-modules #--ignore tests/code/test_main.py --ignore tests/code/test_data.py

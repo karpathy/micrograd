@@ -1,5 +1,11 @@
 class Value:
-    """stores a single scalar value and its gradient"""
+    """stores a single scalar value and its gradient
+    >>> x = Value(3.0)
+    >>> y = x * x
+    >>> y.backward()
+    >>> x.grad
+    6.0
+    """
 
     def __init__(self, data, _children=(), _op=""):
         self.data = data
