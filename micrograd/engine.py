@@ -53,21 +53,15 @@ class Value:
 
     def backward(self):
 
-        # topological order all of the children in the graph
-        topo = []
+        self.grad = 1
         visited = set()
-        def build_topo(v):
+        def chain_gradients(v):
             if v not in visited:
                 visited.add(v)
+                v._backward()
                 for child in v._prev:
-                    build_topo(child)
-                topo.append(v)
-        build_topo(self)
-
-        # go one variable at a time and apply the chain rule to get its gradient
-        self.grad = 1
-        for v in reversed(topo):
-            v._backward()
+                    chain_gradients(child)
+        chain_gradients(self)
 
     def __neg__(self): # -self
         return self * -1
