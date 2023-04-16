@@ -1,3 +1,4 @@
+import math
 
 class Value:
     """ stores a single scalar value and its gradient """
@@ -33,14 +34,22 @@ class Value:
         return out
 
     def __pow__(self, other):
-        assert isinstance(other, (int, float)), "only supporting int/float powers for now"
-        out = Value(self.data**other, (self,), f'**{other}')
-
+        other_grad = True
+        
+        if not isinstance(other, Value):
+            other_grad = False
+            other = Value(other)
+        
+        result = Value(self.data ** other.data , (self,other) , '**')
+        
         def _backward():
-            self.grad += (other * self.data**(other-1)) * out.grad
-        out._backward = _backward
-
-        return out
+            self.grad += (other.data) * ((self.data) ** (other.data - 1)) * (result.grad) 
+            if other_grad : 
+                other.grad += round((self.data ** other.data) * math.log(self.data),4)
+            
+        result._backward = _backward
+        
+        return result
 
     def relu(self):
         out = Value(0 if self.data < 0 else self.data, (self,), 'ReLU')
@@ -89,6 +98,23 @@ class Value:
 
     def __rtruediv__(self, other): # other / self
         return other * self**-1
+
+    def __rpow__(self, other):
+        other_grad = True
+        if not isinstance(other , Value):
+            other_grad = False
+            other = Value(other)
+            
+        result = Value(other.data ** self.data , (self,other) , '**')
+        
+        def _backward():
+            self.grad = round((other.data ** self.data) * math.log(other.data) , 4)
+            if other_grad:
+                other.grad += (other.data) * ((self.data) ** (other.data - 1)) * (result.grad)
+            
+        result._backward = _backward
+        
+        return result
 
     def __repr__(self):
         return f"Value(data={self.data}, grad={self.grad})"
