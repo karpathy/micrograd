@@ -99,5 +99,8 @@ class Value:
     def __rtruediv__(self, other): # other / self
         return other * self**-1
 
+    def __rpow__(self, other):
+        return self ** other
+
     def __repr__(self):
         return f"Value(data={self.data}, grad={self.grad})"
