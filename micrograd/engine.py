@@ -1,3 +1,4 @@
+import math
 
 class Value:
     """ stores a single scalar value and its gradient """
@@ -33,14 +34,22 @@ class Value:
         return out
 
     def __pow__(self, other):
-        assert isinstance(other, (int, float)), "only supporting int/float powers for now"
-        out = Value(self.data**other, (self,), f'**{other}')
-
+        other_grad = True
+        
+        if not isinstance(other, Value):
+            other_grad = False
+            other = Value(other)
+        
+        result = Value(self.data ** other.data , (self,other) , '**')
+        
         def _backward():
-            self.grad += (other * self.data**(other-1)) * out.grad
-        out._backward = _backward
-
-        return out
+            self.grad += (other.data) * ((self.data) ** (other.data - 1)) * (result.grad) 
+            if other_grad : 
+                other.grad += round((self.data ** other.data) * math.log(self.data),4)
+            
+        result._backward = _backward
+        
+        return result
 
     def relu(self):
         out = Value(0 if self.data < 0 else self.data, (self,), 'ReLU')
@@ -92,3 +101,15 @@ class Value:
 
     def __repr__(self):
         return f"Value(data={self.data}, grad={self.grad})"
+
+a = Value(2.0)
+b = Value(3.0)
+
+c = a ** b
+
+print(c.data)
+c.backward()
+
+print(c.grad)
+print(a.grad)
+print(b.grad)
