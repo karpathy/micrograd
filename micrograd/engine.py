@@ -100,7 +100,21 @@ class Value:
         return other * self**-1
 
     def __rpow__(self, other):
-        return self ** other
+        other_grad = True
+        if not isinstance(other , Value):
+            other_grad = False
+            other = Value(other)
+            
+        result = Value(other.data ** self.data , (self,other) , '**')
+        
+        def _backward():
+            self.grad = round((other.data ** self.data) * math.log(other.data) , 4)
+            if other_grad:
+                other.grad += (other.data) * ((self.data) ** (other.data - 1)) * (result.grad)
+            
+        result._backward = _backward
+        
+        return result
 
     def __repr__(self):
         return f"Value(data={self.data}, grad={self.grad})"
