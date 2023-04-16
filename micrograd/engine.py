@@ -101,15 +101,3 @@ class Value:
 
     def __repr__(self):
         return f"Value(data={self.data}, grad={self.grad})"
-
-a = Value(2.0)
-b = Value(3.0)
-
-c = a ** b
-
-print(c.data)
-c.backward()
-
-print(c.grad)
-print(a.grad)
-print(b.grad)
