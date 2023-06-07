@@ -33,13 +33,19 @@ class Value:
         return out
 
     def __pow__(self, other):
-        assert isinstance(other, (int, float)), "only supporting int/float powers for now"
-        out = Value(self.data**other, (self,), f'**{other}')
+        if isinstance(other, (int, float)):
+            out = Value(self.data**other, (self,), f'**{other}')
 
-        def _backward():
-            self.grad += (other * self.data**(other-1)) * out.grad
-        out._backward = _backward
+            def _backward():
+                self.grad += (other * self.data**(other-1)) * out.grad
+            out._backward = _backward
+        else:
+            out = Value(self.data**other.data, (self, other), f'**{other}')
 
+            def _backward():
+                self.grad += (other.data * self.data**(other.data-1)) * out.grad
+                other.grad += (self.data**other.data) * math.log(self.data) * out.grad
+            out._backward = _backward
         return out
 
     def relu(self):
