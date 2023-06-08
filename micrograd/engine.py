@@ -44,7 +44,12 @@ class Value:
 
             def _backward():
                 self.grad += (other.data * self.data**(other.data-1)) * out.grad
-                other.grad += (self.data**other.data) * math.log(self.data) * out.grad
+                if self.data > 0:
+                    other.grad += (self.data**other.data) * math.log(self.data) * out.grad
+                elif self.data < 0:
+                    other.grad += (self.data**other.data) * math.log(-self.data) * out.grad
+                else:
+                    other.grad += 0
             out._backward = _backward
         return out
 
