@@ -58,3 +58,31 @@ class MLP(Module):
 
     def __repr__(self):
         return f"MLP of [{', '.join(str(layer) for layer in self.layers)}]"
+
+class LayerNorm(Module):
+    #TODO
+    pass
+
+class Embedding(Module):
+    #TODO
+    pass
+
+class CausaAttentionHead(Module):
+    #TODO:
+    pass
+
+class MultiHeadAttention(Module):
+    #TODO
+    pass
+
+class TransformerBlock(Module):
+    #TODO
+    pass
+
+class GPT(Module):
+    #TODO
+    pass
+
+class CrossEntropyLoss(Module):
+    #TODO
+    pass
