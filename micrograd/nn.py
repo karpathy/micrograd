@@ -71,16 +71,22 @@ class MLP(Module):
         return f"MLP of [{', '.join(str(layer) for layer in self.layers)}]"
 
 class TrainableMatrix(Module):
+    #TODO: add bias as option
     def __init__(self, height, width):
         self.width=width
         self.height=height
         self.values=[[Value(random.uniform(-1,1)) for _ in range(width)] for _ in range(height)]
-    #call doesn't make sense here directly I don't think?
-    #we use instead matmuls as operations we usually do here
+        self.outputs=[Value(0) for _ in range(height)]
+    #this is sort of the same thing as Linear above, except we have everything in one place, which makes it easier to do matmul, etc.
+    def __call__(self,x):
+        for i in range(self.height):
+            for j in range(self.width):
+                self.outputs[i]+=self.values[j]*x[j]
+        return self.outputs
     def parameters(self):
         return [p for row in self.values for p in row]
     
-    def repr(self):
+    def __repr__(self):
         pass
     
 class MatMul(Module):
@@ -123,7 +129,7 @@ class Scale(Module):
             for j in range(len(mat.values[0])):
                 mat[i][j]/=k
         return mat
-        
+
 class CausalAttentionMask(Module):
     def __init__(self,mat):
         self.mat=mat
@@ -133,9 +139,9 @@ class CausalAttentionHead(Module):
     #TODO: figure out how to fit attention into this framework
     def __init__(n_embd,use_bias=False):
         self.n_embd=n_embd
-        self.wq=None
-        self.wk=None
-        self.wv=None
+        self.wq=TrainableMatrix(n_embd,n_embd)
+        self.wk=TrainableMatrix(n_embd,n_embd)
+        self.wv=TrainableMatrix(n_embd,n_embd)
         self.q=TrainableMatrix(n_embd,n_embd)
         self.k=TrainableMatrix(n_embd,n_embd)
         self.v=TrainableMatrix(n_embd,n_embd)
@@ -143,9 +149,9 @@ class CausalAttentionHead(Module):
         #we need to project our input x to matrices wiq, wik, wiv (https://arxiv.org/pdf/1706.03762.pdf, page 5)
         #wiq, wik, wiv should be matrices corresponding to linear projections of x
         #TODO: figure out how wiq, wik and wiv should be obtained in our framework
-        self.wq=self.wiq(x)
-        self.wk=self.wik(x)
-        self.wv=self.wiv(x)
+        self.wq=self.wq(x)
+        self.wk=self.wk(x)
+        self.wv=self.wv(x)
         q_proj=MatMul(q,wq)
         k_proj=MatMul(k,wk)
         v_proj=MatMul(v,wv)
