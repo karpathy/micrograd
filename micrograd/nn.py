@@ -70,23 +70,116 @@ class MLP(Module):
     def __repr__(self):
         return f"MLP of [{', '.join(str(layer) for layer in self.layers)}]"
 
+class TrainableMatrix(Module):
+    def __init__(self, height, width):
+        self.width=width
+        self.height=height
+        self.values=[[Value(random.uniform(-1,1)) for _ in range(width)] for _ in range(height)]
+    #call doesn't make sense here directly I don't think?
+    #we use instead matmuls as operations we usually do here
+    def parameters(self):
+        return [p for row in self.values for p in row]
+    
+    def repr(self):
+        pass
+    
+class MatMul(Module):
+    def __init__(self, mat1, mat2):
+        self.mat1=mat1
+        self.mat2=mat2
+        assert mat1.width==mat2.height
+        self.out=TrainableMatrix(mat1.height,mat2.width)
+    def __call__(self, mat1, mat2, transpose_b=False):
+        if not transpose_b:
+            for i in range(mat1.height):
+                for j in range(mat2.width):
+                    for k in range(mat1.width):
+                        self.out[i][j]+=mat1[i][k]*mat2[k][j]
+        else:
+            for i in range(mat1.height):
+                for j in range(mat2.height):
+                    for k in range(mat1.width):
+                        self.out[i][j]==mat1[i][k]*mat2[j][k]
+        return self.out
+
+class Softmax(Module):
+    def __init__(self,x):
+        self.num_values=len(x.values)
+        self.values=[Value(0) for _ in self.num_values]
+        self.sum_exp=Value(0)
+    def __call__(self,x):
+        for val in x.values:
+            self.sum_exp+=val.exp()
+        for i in range(x.values):
+            self.values[i]=x.values[i].exp()/self.sum_exp
+        return self.values
+
+class Scale(Module):
+    def __init__(self,mat,k):
+        self.k=k
+        self.mat=mat
+    def __call__(self,mat,k):
+        for i in range(len(mat.values)):
+            for j in range(len(mat.values[0])):
+                mat[i][j]/=k
+        return mat
+        
+class CausalAttentionMask(Module):
+    def __init__(self,mat):
+        self.mat=mat
+        pass
+
 class CausalAttentionHead(Module):
     #TODO: figure out how to fit attention into this framework
     def __init__(n_embd,use_bias=False):
         self.n_embd=n_embd
-        self.q=Linear(n_embd,n_embd,use_bias=use_bias)
-        self.k=Linear(n_embd,n_embd,use_bias=use_bias)
-        self.v=Linear(n_embd,n_embd,use_bias=use_bias)
-    def __call__(self):
-        pass
+        self.wq=None
+        self.wk=None
+        self.wv=None
+        self.q=TrainableMatrix(n_embd,n_embd)
+        self.k=TrainableMatrix(n_embd,n_embd)
+        self.v=TrainableMatrix(n_embd,n_embd)
+    def __call__(self,x):
+        #we need to project our input x to matrices wiq, wik, wiv (https://arxiv.org/pdf/1706.03762.pdf, page 5)
+        #wiq, wik, wiv should be matrices corresponding to linear projections of x
+        #TODO: figure out how wiq, wik and wiv should be obtained in our framework
+        self.wq=self.wiq(x)
+        self.wk=self.wik(x)
+        self.wv=self.wiv(x)
+        q_proj=MatMul(q,wq)
+        k_proj=MatMul(k,wk)
+        v_proj=MatMul(v,wv)
+        return MatMul(Scale(MatMul(q_proj,k_proj, transpose_b=True),self.n_embd),v_proj)
+
     def parameters(self):
         pass
     def __repr__(self):
         pass
 
+class Concat(Module):
+    #concatenate multiple matrices into one
+    def __init__():
+        pass
+    def __call__():
+        pass
+    
 class MultiHeadAttention(Module):
     #TODO
-    pass
+    def __init__(n_embd,n_head,use_bias=False):
+        assert n_embd%n_head==0
+        self.n_embd=n_embd
+        self.n_head=n_head
+        self.single_head_dim=n_embd//n_head
+        self.attention_layers=[CausalAttentionHead(self.single_head_dim,use_bias=use_bias) for _ in range(n_head)]
+        self.wo=TrainableMatrix(n_embd,self.single_head_dim)
+    def __call__(self,x):
+        attn_outs=[self.attention_layers[i](x) for i in range(n_head)]
+        attn_concat=Concat(attn_outs)
+        out=MatMul(att_concat,self.wo)
+    def parameters(self):
+        pass
+    def __repr__(self):
+        pass
 
 
 class LayerNorm(Module):
