@@ -114,8 +114,9 @@ class MatMul(Module):
                     for k in range(mat1.width):
                         self.out[i][j]==mat1[i][k]*mat2[j][k]
         return self.out
+        
     def parameters(self):
-        return self.mat1.parameters()+self.mat2.parameters()
+        return self.mat1.parameters()+self.mat2.parameters()+self.out.parameters()
 
 class Softmax(Module):
     #TODO: use more numerically stable version where we divide everything by max value
@@ -268,6 +269,7 @@ class GPT(Module):
         pass
 
 class CrossEntropyLoss(Module):
+    #TODO: check that everything is fine with logits vs self.logits, etc.
     def __init__(self,logits,values,reduction="sum"):
         #only supporting unweighted cross-entropy loss
         self.logits=logits
@@ -275,7 +277,7 @@ class CrossEntropyLoss(Module):
         self.num_classes=len(logits)
         self.reduction=reduction
         assert(self.reduction in ["mean","sum"])
-    def __call__():
+    def __call__(self,logits,values):
         #TODO: add normalization for numeric stability (should scale largest value to 1, but not sure how that affects backprop)
         #formula copied from https://pytorch.org/docs/stable/generated/torch.nn.CrossEntropyLoss.html
         sum_exp=sum(l.exp() for l in logits)
@@ -286,3 +288,6 @@ class CrossEntropyLoss(Module):
             return sum(ls)/num_classes
     def parameters(self):
         return [l for l in self.logits]
+
+class BinaryCrossEntropyLoss(Module):
+    pass
