@@ -7,6 +7,13 @@ possible future additions:
 - adding dropout
 '''
 
+'''
+general todos:
+- should check that all methods have init, call and parameters functions (and possibly repr for vis)
+- should check that we always have access to correct parameters which get updated
+ (that we save local copies in some operations) if we need parameters, so that we can get gradients later, etc.
+'''
+
 class Module:
 
     def zero_grad(self):
@@ -111,6 +118,7 @@ class MatMul(Module):
         return self.mat1.parameters()+self.mat2.parameters()
 
 class Softmax(Module):
+    #TODO: use more numerically stable version where we divide everything by max value
     def __init__(self,x):
         self.num_values=len(x.values)
         self.values=[Value(0) for _ in self.num_values]
@@ -134,8 +142,16 @@ class Scale(Module):
 
 class CausalAttentionMask(Module):
     def __init__(self,mat):
+        assert mat.width==mat.height
         self.mat=mat
-        pass
+        self.n_embd=math.width
+    def __call__(self,mat):
+        for i in range(self.n_embd):
+            for j in range(i):
+                mat.values[i][j]=Value(float('-inf'))
+        return mat
+    def parameters():
+        return self.mat.parameters()
 
 class CausalAttentionHead(Module):
     #TODO: figure out how to fit attention into this framework
@@ -250,7 +266,7 @@ class GPT(Module):
         pass
     def parameters():
         pass
-        
+
 class CrossEntropyLoss(Module):
     def __init__(self,logits,values,reduction="sum"):
         #only supporting unweighted cross-entropy loss
