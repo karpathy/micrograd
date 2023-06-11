@@ -1,3 +1,4 @@
+import math
 
 class Value:
     """ stores a single scalar value and its gradient """
@@ -41,6 +42,17 @@ class Value:
         out._backward = _backward
 
         return out
+
+    def exp(self):
+        out = Value(math.exp(self.data), (self,), "e")
+
+        def _backward():
+            self.grad += math.exp(self.data) * out.grad
+
+        out._backward = _backward
+
+        return out
+
 
     def relu(self):
         out = Value(0 if self.data < 0 else self.data, (self,), 'ReLU')
