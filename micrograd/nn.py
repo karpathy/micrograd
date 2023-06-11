@@ -107,6 +107,8 @@ class MatMul(Module):
                     for k in range(mat1.width):
                         self.out[i][j]==mat1[i][k]*mat2[j][k]
         return self.out
+    def parameters(self):
+        return self.mat1.parameters()+self.mat2.parameters()
 
 class Softmax(Module):
     def __init__(self,x):
@@ -147,8 +149,6 @@ class CausalAttentionHead(Module):
         self.v=TrainableMatrix(n_embd,n_embd)
     def __call__(self,x):
         #we need to project our input x to matrices wiq, wik, wiv (https://arxiv.org/pdf/1706.03762.pdf, page 5)
-        #wiq, wik, wiv should be matrices corresponding to linear projections of x
-        #TODO: figure out how wiq, wik and wiv should be obtained in our framework
         self.wq=self.wq(x)
         self.wk=self.wk(x)
         self.wv=self.wv(x)
@@ -158,7 +158,9 @@ class CausalAttentionHead(Module):
         return MatMul(Scale(MatMul(q_proj,k_proj, transpose_b=True),self.n_embd),v_proj)
 
     def parameters(self):
-        pass
+        return self.wq.parameters()+self.wk.parameters()+self.wv.parameters()
+        + self.q.parameters()+self.k.parameters()+self.v.parameters()
+
     def __repr__(self):
         pass
 
@@ -183,7 +185,7 @@ class MultiHeadAttention(Module):
         attn_concat=Concat(attn_outs)
         out=MatMul(att_concat,self.wo)
     def parameters(self):
-        pass
+        return [att.parameters() for att in self.attention_layers]+self.wo.parameters()
     def __repr__(self):
         pass
 
@@ -197,12 +199,12 @@ class Embedding(Module):
         self.vocab_size=vocab_size
         self.n_embd=n_embd
         #we embed each one-dimensional values to n_embd dimensions, and those are our trainable weights
-        self.embeddings_list=[[Value(random.uniform(-1,1)) for _ in range(n_embd)] for _ in range(vocab_size)]
+        self.embeddings_list=TrainableMatrix(n_embd,vocab_size)
     def __call__(self,x):
         assert(0<=x and x<vocab_size)
-        return self.embeddings_list[x]
+        return self.embeddings_list.values[x]
     def parameters(self):
-        return [p for embedding in self.embeddings_list for p in embedding]
+        return self.embeddings_list.parameters()
     def __repr__(self):
         return f"Embedding of [{"|".join(emb) for emb in embeddings_list}]"
 
@@ -216,7 +218,7 @@ class GPT_MLP(Module):
         x = self.c_proj(x)
         return x
     def parameters(self):
-        pass
+        return self.c_fc.parameters()+self.c_proj.parameters()
     def __repr__(self):
         pass
          
@@ -233,7 +235,8 @@ class TransformerBlock(Module):
         x = x + self.mlp(self.ln_2(x))
         return x
     def parameters(self):
-        pass
+        return self.ln_1.parameters()+self.attn.parameters()+self.ln_2.parameters()+self.mlp.parameters()
+
     def __repr__(self):
         pass
 
@@ -242,8 +245,12 @@ class GPT(Module):
         self.token_embedding=Embedding(vocab_size,n_embd)
         #not using positional embeddings! (https://twitter.com/a_kazemnejad/status/1664277559968927744)
         self.transformer_blocks=[TransformerBlock(n_embd,n_head,use_bias) for _ in range(n_layer)]
-        self.layernorm_final=[]
-    def 
+        self.layernorm_final=LayerNorm(n_embd)
+    def __call__(self,x):
+        pass
+    def parameters():
+        pass
+        
 class CrossEntropyLoss(Module):
     def __init__(self,logits,values,reduction="sum"):
         #only supporting unweighted cross-entropy loss
