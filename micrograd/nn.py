@@ -156,23 +156,44 @@ class CausalAttentionMask(Module):
 
 class CausalAttentionHead(Module):
     #TODO: figure out how to fit attention into this framework
-    def __init__(n_embd,use_bias=False):
+    def __init__(self, n_embd, n_head,use_bias=False):
+        assert n_embd%n_head==0
         self.n_embd=n_embd
-        self.wq=TrainableMatrix(n_embd,n_embd)
-        self.wk=TrainableMatrix(n_embd,n_embd)
-        self.wv=TrainableMatrix(n_embd,n_embd)
-        self.q=TrainableMatrix(n_embd,n_embd)
-        self.k=TrainableMatrix(n_embd,n_embd)
-        self.v=TrainableMatrix(n_embd,n_embd)
-    def __call__(self,x):
+        self.n_head=n_head
+        self.head_size = n_embd // n_head
+        # self.wq=TrainableMatrix(n_embd,n_embd)
+        # self.wk=TrainableMatrix(n_embd,n_embd)
+        # self.wv=TrainableMatrix(n_embd,n_embd)
+        # self.q=TrainableMatrix(n_embd,n_embd)
+        # self.k=TrainableMatrix(n_embd,n_embd)
+        # self.v=TrainableMatrix(n_embd,n_embd)
+
+        self.wq = [Linear(n_embd, self.head_size, nonlin=False, use_bias=use_bias) for _ in range(n_head)]
+        self.wk = [Linear(n_embd, self.head_size, nonlin=False, use_bias=use_bias) for _ in range(n_head)]
+        self.wv = [Linear(n_embd, self.head_size, nonlin=False, use_bias=use_bias) for _ in range(n_head)]
+
+        self.proj = Linear(n_embd, n_embd, nonlin=False, use_bias=use_bias)
+
+    def __call__(self, x):
+        n, embd_size = x.size() # this works for python lists, but not for values
+        assert embd_size == self.n_embd
         #we need to project our input x to matrices wiq, wik, wiv (https://arxiv.org/pdf/1706.03762.pdf, page 5)
-        self.wq=self.wq(x)
-        self.wk=self.wk(x)
-        self.wv=self.wv(x)
-        q_proj=MatMul(q,wq)
-        k_proj=MatMul(k,wk)
-        v_proj=MatMul(v,wv)
-        return MatMul(Scale(MatMul(q_proj,k_proj, transpose_b=True),self.n_embd),v_proj)
+        # self.wq=self.wq(x)
+        # self.wk=self.wk(x)
+        # self.wv=self.wv(x)
+        # q_proj=MatMul(q,wq)
+        # k_proj=MatMul(k,wk)
+        # v_proj=MatMul(v,wv)
+        self.q = [self.wq[i](x) for i in range(self.n_head)] # (nh, n, hs)
+        self.k = [self.wk[i](x) for i in range(self.n_head)] # (nh, n, hs)
+        self.v = [self.wv[i](x) for i in range(self.n_head)] # (nh, n, hs)
+
+        z = [MatMul(Scale(MatMul(self.q[i], self.k[i], transpose_b=True), math.sqrt(self.head_size)), self.v[i]) for i in range(self.n_head)]
+        # concatenate z
+        # mask z
+        # softmax on z
+
+        return self.proj(z)
 
     def parameters(self):
         return self.wq.parameters()+self.wk.parameters()+self.wv.parameters()
