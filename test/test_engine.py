@@ -1,9 +1,12 @@
 import torch
-from micrograd.engine import Value
+import numpy as np
+
+import micrograd as mg
+from micrograd.engine import Scalar
 
 def test_sanity_check():
 
-    x = Value(-4.0)
+    x = Scalar(-4.0)
     z = 2 * x + 2 + x
     q = z.relu() + z * x
     h = (z * z).relu()
@@ -27,8 +30,8 @@ def test_sanity_check():
 
 def test_more_ops():
 
-    a = Value(-4.0)
-    b = Value(2.0)
+    a = Scalar(-4.0)
+    b = Scalar(2.0)
     c = a + b
     d = a * b + b**3
     c += c + 1
@@ -65,3 +68,20 @@ def test_more_ops():
     # backward pass went well
     assert abs(amg.grad - apt.grad.item()) < tol
     assert abs(bmg.grad - bpt.grad.item()) < tol
+
+
+def test_math():
+    for theta in [0.0, np.pi/4, np.pi/3, np.pi/2]:
+        # Test sin
+        a = Scalar(theta)
+        b = mg.sin(a)
+        b.backward()
+        assert abs(b.data - np.sin(theta)) < 1e-6
+        assert abs(a.grad - np.cos(theta)) < 1e-6
+
+        # Test cos
+        a = Scalar(theta)
+        b = mg.cos(a)
+        b.backward()
+        assert abs(b.data - np.cos(theta)) < 1e-6
+        assert abs(a.grad + np.sin(theta)) < 1e-6

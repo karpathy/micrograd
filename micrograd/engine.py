@@ -1,5 +1,6 @@
+import numpy as np
 
-class Value:
+class Scalar:
     """ stores a single scalar value and its gradient """
 
     def __init__(self, data, _children=(), _op=''):
@@ -11,8 +12,8 @@ class Value:
         self._op = _op # the op that produced this node, for graphviz / debugging / etc
 
     def __add__(self, other):
-        other = other if isinstance(other, Value) else Value(other)
-        out = Value(self.data + other.data, (self, other), '+')
+        other = other if isinstance(other, type(self)) else Scalar(other)
+        out = Scalar(self.data + other.data, (self, other), '+')
 
         def _backward():
             self.grad += out.grad
@@ -22,8 +23,8 @@ class Value:
         return out
 
     def __mul__(self, other):
-        other = other if isinstance(other, Value) else Value(other)
-        out = Value(self.data * other.data, (self, other), '*')
+        other = other if isinstance(other, type(self)) else Scalar(other)
+        out = Scalar(self.data * other.data, (self, other), '*')
 
         def _backward():
             self.grad += other.data * out.grad
@@ -34,7 +35,7 @@ class Value:
 
     def __pow__(self, other):
         assert isinstance(other, (int, float)), "only supporting int/float powers for now"
-        out = Value(self.data**other, (self,), f'**{other}')
+        out = Scalar(self.data**other, (self,), f'**{other}')
 
         def _backward():
             self.grad += (other * self.data**(other-1)) * out.grad
@@ -42,21 +43,12 @@ class Value:
 
         return out
 
-    def relu(self):
-        out = Value(0 if self.data < 0 else self.data, (self,), 'ReLU')
-
-        def _backward():
-            self.grad += (out.data > 0) * out.grad
-        out._backward = _backward
-
-        return out
-
     def backward(self):
-
         # topological order all of the children in the graph
         topo = []
         visited = set()
         def build_topo(v):
+            v.grad = 0
             if v not in visited:
                 visited.add(v)
                 for child in v._prev:
@@ -91,4 +83,29 @@ class Value:
         return other * self**-1
 
     def __repr__(self):
-        return f"Value(data={self.data}, grad={self.grad})"
+        return f"Scalar(data={self.data}, grad={self.grad})"
+
+def sin(x):
+    out = Scalar(np.sin(x.data), (x,), 'sin')
+
+    def _backward():
+        x.grad += np.cos(x.data) * out.grad
+    out._backward = _backward
+
+    return out
+
+def cos(x):
+    out = Scalar(np.cos(x.data), (x,), 'cos')
+
+    def _backward():
+        x.grad += -np.sin(x.data) * out.grad
+    out._backward = _backward
+
+    return out
+
+
+# TODO:
+# - add Array container for list of Scalars
+# - add "overloaded functions" for sin, cos, exp, log, etc
+# - add support for matrix multiplication?
+# - add forward mode AD
