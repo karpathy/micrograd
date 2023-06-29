@@ -1,6 +1,8 @@
 import random
 from micrograd.engine import Value
 import math
+from typing import List
+
 '''
 possible future additions:
 - training with multiple batches
@@ -16,11 +18,11 @@ general todos:
 
 class Module:
 
-    def zero_grad(self):
+    def zero_grad(self) -> None:
         for p in self.parameters():
             p.grad = 0
 
-    def parameters(self):
+    def parameters(self) -> List[Value]:
         return []
 
 class Neuron(Module):
@@ -225,6 +227,22 @@ class LayerNorm(Module):
     #TODO
     pass
 
+class Sequential(Module):
+
+    def __init__(self, layers: List[Module]):
+        self.layers = layers
+
+    def __call__(self, x):
+        for layer in self.layers:
+            x = layer(x)
+        return x
+
+    def parameters(self):
+        return [p for layer in self.layers for p in layer.parameters()]
+
+    def __repr__(self):
+        return f"MLP of [{', '.join(str(layer) for layer in self.layers)}]"
+
 # class Embedding(Module):
 #     def __init__(self,vocab_size,n_embd):
 #         self.vocab_size=vocab_size
@@ -306,9 +324,9 @@ class LayerNorm(Module):
 
 class Softmax(Module):
     #TODO: use more numerically stable version where we divide everything by max value
-    def __init__(self,x):
-        self.num_values=len(x.values)
-        self.values=[Value(0) for _ in self.num_values]
+    def __init__(self, num_classes):
+        self.num_classes = num_classes
+        self.values=[Value(0) for _ in self.num_classes]
         self.sum_exp=Value(0)
     def __call__(self,x):
         for val in x.values:
