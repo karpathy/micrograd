@@ -1,4 +1,13 @@
 import torch
+import sys
+import os
+
+# Get the absolute path of the root directory
+root_directory = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Add the root directory to the Python module search path
+sys.path.append(root_directory)
+
 from micrograd.engine import Value
 
 def test_sanity_check():
@@ -65,3 +74,8 @@ def test_more_ops():
     # backward pass went well
     assert abs(amg.grad - apt.grad.item()) < tol
     assert abs(bmg.grad - bpt.grad.item()) < tol
+
+if __name__ == '__main__':
+    test_sanity_check()
+    test_more_ops()
+    print("All tests passed")

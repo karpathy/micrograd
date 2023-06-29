@@ -52,10 +52,16 @@ class Linear(Module):
 
     def __call__(self, x):
         out = [n(x) for n in self.neurons]
-        return out[0] if len(out) == 1 else out
+        return out
 
     def parameters(self):
         return [p for n in self.neurons for p in n.parameters()]
+    
+    def get_weights(self):
+        return [n.w for n in self.neurons]
+    
+    def get_biases(self):
+        return [n.b for n in self.neurons]
 
     def __repr__(self):
         return f"Linear layer of [{', '.join(str(n) for n in self.neurons)}]"
@@ -118,19 +124,6 @@ class MatMul(Module):
     def parameters(self):
         return self.mat1.parameters()+self.mat2.parameters()+self.out.parameters()
 
-class Softmax(Module):
-    #TODO: use more numerically stable version where we divide everything by max value
-    def __init__(self,x):
-        self.num_values=len(x.values)
-        self.values=[Value(0) for _ in self.num_values]
-        self.sum_exp=Value(0)
-    def __call__(self,x):
-        for val in x.values:
-            self.sum_exp+=val.exp()
-        for i in range(x.values):
-            self.values[i]=x.values[i].exp()/self.sum_exp
-        return self.values
-
 class Scale(Module):
     def __init__(self,mat,k):
         self.k=k
@@ -151,7 +144,7 @@ class CausalAttentionMask(Module):
             for j in range(i):
                 mat.values[i][j]=Value(float('-inf'))
         return mat
-    def parameters():
+    def parameters(self):
         return self.mat.parameters()
 
 class CausalAttentionHead(Module):
@@ -211,7 +204,7 @@ class Concat(Module):
     
 class MultiHeadAttention(Module):
     #TODO
-    def __init__(n_embd,n_head,use_bias=False):
+    def __init__(self, n_embd,n_head,use_bias=False):
         assert n_embd%n_head==0
         self.n_embd=n_embd
         self.n_head=n_head
@@ -219,9 +212,9 @@ class MultiHeadAttention(Module):
         self.attention_layers=[CausalAttentionHead(self.single_head_dim,use_bias=use_bias) for _ in range(n_head)]
         self.wo=TrainableMatrix(n_embd,self.single_head_dim)
     def __call__(self,x):
-        attn_outs=[self.attention_layers[i](x) for i in range(n_head)]
+        attn_outs=[self.attention_layers[i](x) for i in range(self.n_head)]
         attn_concat=Concat(attn_outs)
-        out=MatMul(att_concat,self.wo)
+        out=MatMul(attn_concat,self.wo)
     def parameters(self):
         return [att.parameters() for att in self.attention_layers]+self.wo.parameters()
     def __repr__(self):
@@ -232,83 +225,112 @@ class LayerNorm(Module):
     #TODO
     pass
 
-class Embedding(Module):
-    def __init__(self,vocab_size,n_embd):
-        self.vocab_size=vocab_size
-        self.n_embd=n_embd
-        #we embed each one-dimensional values to n_embd dimensions, and those are our trainable weights
-        self.embeddings_list=TrainableMatrix(n_embd,vocab_size)
-    def __call__(self,x):
-        assert(0<=x and x<vocab_size)
-        return self.embeddings_list.values[x]
-    def parameters(self):
-        return self.embeddings_list.parameters()
-    def __repr__(self):
-        return f"Embedding of [{"|".join(emb) for emb in embeddings_list}]"
+# class Embedding(Module):
+#     def __init__(self,vocab_size,n_embd):
+#         self.vocab_size=vocab_size
+#         self.n_embd=n_embd
+#         #we embed each one-dimensional values to n_embd dimensions, and those are our trainable weights
+#         self.embeddings_list=TrainableMatrix(n_embd,vocab_size)
+#     def __call__(self,x):
+#         assert(0<=x and x<vocab_size)
+#         return self.embeddings_list.values[x]
+#     def parameters(self):
+#         return self.embeddings_list.parameters()
+#     def __repr__(self):
+#         return f"Embedding of [{"|".join(emb) for emb in embeddings_list}]"
 
-class GPT_MLP(Module):
-    def __init__(self, n_embd,use_bias=False):
-        self.c_fc = nn.Linear(n_embd, 4 * n_embd, use_bias=use_bias,nonlin=True)
-        self.c_proj = nn.Linear(4 * n_embd, n_embd, use_bias=use_bias,nonlin=False)
+# class GPT_MLP(Module):
+#     def __init__(self, n_embd,use_bias=False):
+#         self.c_fc = Linear(n_embd, 4 * n_embd, use_bias=use_bias,nonlin=True)
+#         self.c_proj = Linear(4 * n_embd, n_embd, use_bias=use_bias,nonlin=False)
 
-    def forward(self, x):
-        x = self.c_fc(x)
-        x = self.c_proj(x)
-        return x
-    def parameters(self):
-        return self.c_fc.parameters()+self.c_proj.parameters()
-    def __repr__(self):
-        pass
+#     def forward(self, x):
+#         x = self.c_fc(x)
+#         x = self.c_proj(x)
+#         return x
+#     def parameters(self):
+#         return self.c_fc.parameters()+self.c_proj.parameters()
+#     def __repr__(self):
+#         pass
          
-class TransformerBlock(Module):
-    def __init__(self, n_embd, m_head, use_bias=False):
-        self.n_embd=n_embd
-        self.ln_1 = LayerNorm(n_embd, use_bias=use_bias)
-        self.attn = MultiHeadAttention(n_embd,n_head)
-        self.ln_2 = LayerNorm(n_embd, use_bias=use_bias)
-        self.mlp = GPT_MLP(n_embd, use_bias=use_bias)
+# class TransformerBlock(Module):
+#     def __init__(self, n_embd, m_head, use_bias=False):
+#         self.n_embd=n_embd
+#         self.ln_1 = LayerNorm(n_embd, use_bias=use_bias)
+#         self.attn = MultiHeadAttention(n_embd,n_head)
+#         self.ln_2 = LayerNorm(n_embd, use_bias=use_bias)
+#         self.mlp = GPT_MLP(n_embd, use_bias=use_bias)
 
-    def __call__(self, x):
-        x = x + self.attn(self.ln_1(x))
-        x = x + self.mlp(self.ln_2(x))
-        return x
-    def parameters(self):
-        return self.ln_1.parameters()+self.attn.parameters()+self.ln_2.parameters()+self.mlp.parameters()
+#     def __call__(self, x):
+#         x = x + self.attn(self.ln_1(x))
+#         x = x + self.mlp(self.ln_2(x))
+#         return x
+#     def parameters(self):
+#         return self.ln_1.parameters()+self.attn.parameters()+self.ln_2.parameters()+self.mlp.parameters()
 
-    def __repr__(self):
-        pass
+#     def __repr__(self):
+#         pass
 
-class GPT(Module):
-    def __init__(self, n_layer, vocab_size, n_embd, n_head, use_bias=False):
-        self.token_embedding=Embedding(vocab_size,n_embd)
-        #not using positional embeddings! (https://twitter.com/a_kazemnejad/status/1664277559968927744)
-        self.transformer_blocks=[TransformerBlock(n_embd,n_head,use_bias) for _ in range(n_layer)]
-        self.layernorm_final=LayerNorm(n_embd)
+# class GPT(Module):
+#     def __init__(self, n_layer, vocab_size, n_embd, n_head, use_bias=False):
+#         self.token_embedding=Embedding(vocab_size,n_embd)
+#         #not using positional embeddings! (https://twitter.com/a_kazemnejad/status/1664277559968927744)
+#         self.transformer_blocks=[TransformerBlock(n_embd,n_head,use_bias) for _ in range(n_layer)]
+#         self.layernorm_final=LayerNorm(n_embd)
+#     def __call__(self,x):
+#         pass
+#     def parameters():
+#         pass
+
+# class CrossEntropyLoss(Module):
+#     #TODO: check that everything is fine with logits vs self.logits, etc.
+#     def __init__(self,logits,values,reduction="sum"):
+#         #only supporting unweighted cross-entropy loss
+#         self.logits=logits
+#         self.values=values
+#         self.num_classes=len(logits)
+#         self.reduction=reduction
+#         assert(self.reduction in ["mean","sum"])
+#     def __call__(self,logits,values):
+#         #TODO: add normalization for numeric stability (should scale largest value to 1, but not sure how that affects backprop)
+#         #formula copied from https://pytorch.org/docs/stable/generated/torch.nn.CrossEntropyLoss.html
+#         sum_exp=sum(l.exp() for l in logits)
+#         ls=[-math.log(logits[i].exp()/sum_exp)*values[i] for i in range self.num_classes]
+#         if self.reduction=="sum":
+#             return sum(ls)
+#         else:
+#             return sum(ls)/self.num_classes
+#     def parameters(self):
+#         return [l for l in self.logits]
+
+
+class Softmax(Module):
+    #TODO: use more numerically stable version where we divide everything by max value
+    def __init__(self,x):
+        self.num_values=len(x.values)
+        self.values=[Value(0) for _ in self.num_values]
+        self.sum_exp=Value(0)
     def __call__(self,x):
-        pass
-    def parameters():
-        pass
+        for val in x.values:
+            self.sum_exp+=val.exp()
+        for i in range(x.values):
+            self.values[i]=x.values[i].exp()/self.sum_exp
+        return self.values
 
 class CrossEntropyLoss(Module):
     #TODO: check that everything is fine with logits vs self.logits, etc.
-    def __init__(self,logits,values,reduction="sum"):
+    def __init__(self, num_classes, reduction="mean"):
         #only supporting unweighted cross-entropy loss
-        self.logits=logits
-        self.values=values
-        self.num_classes=len(logits)
-        self.reduction=reduction
+        self.num_classes=num_classes
+        self.reduction = reduction
+        self.loss = Value(0)
         assert(self.reduction in ["mean","sum"])
     def __call__(self,logits,values):
-        #TODO: add normalization for numeric stability (should scale largest value to 1, but not sure how that affects backprop)
-        #formula copied from https://pytorch.org/docs/stable/generated/torch.nn.CrossEntropyLoss.html
-        sum_exp=sum(l.exp() for l in logits)
-        ls=[-math.log(logits[i].exp()/sum_exp)*values[i] for i in range self.num_classes]
-        if self.reduction=="sum":
-            return sum(ls)
-        else:
-            return sum(ls)/num_classes
-    def parameters(self):
-        return [l for l in self.logits]
+        for logit, label in zip(logits,values):
+            self.loss+=-logit.log()*label
+        if self.reduction=="mean":
+            return self.loss/self.num_classes
+        return self.loss
 
 class BinaryCrossEntropyLoss(Module):
     pass
