@@ -337,15 +337,17 @@ class Softmax(Module):
 
 class CrossEntropyLoss(Module):
     #TODO: check that everything is fine with logits vs self.logits, etc.
-    def __init__(self, num_classes, reduction="mean"):
+    def __init__(self, num_classes, reduction="mean", epsilon=1e-8):
         #only supporting unweighted cross-entropy loss
         self.num_classes=num_classes
         self.reduction = reduction
+        self.epsilon = epsilon
         self.loss = Value(0)
         assert(self.reduction in ["mean","sum"])
     def __call__(self,logits,values):
         for logit, label in zip(logits,values):
-            self.loss+=-logit.log()*label
+            logit_clipped = logit.clip(self.epsilon,1-self.epsilon)
+            self.loss+=-logit_clipped.log()*label
         if self.reduction=="mean":
             return self.loss/self.num_classes
         return self.loss

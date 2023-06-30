@@ -54,10 +54,21 @@ class Value:
         return out
     
     def log(self):
+        assert self.data > 0, "Can only take the log of a positive number"
         out = Value(math.log(self.data), (self,), "log")
 
         def _backward():
             self.grad += (1 / self.data) * out.grad
+
+        out._backward = _backward
+
+        return out
+    
+    def clip(self, min, max):
+        out = Value(min if self.data < min else (max if self.data > max else self.data), (self,), "clip")
+
+        def _backward():
+            self.grad += (out.data >= min and out.data <= max) * out.grad
 
         out._backward = _backward
 
@@ -74,7 +85,6 @@ class Value:
         return out
 
     def backward(self):
-
         # topological order all of the children in the graph
         topo = []
         visited = set()
@@ -86,10 +96,26 @@ class Value:
                 topo.append(v)
         build_topo(self)
 
+        print(len(topo))
+
         # go one variable at a time and apply the chain rule to get its gradient
         self.grad = 1
         for v in reversed(topo):
             v._backward()
+    
+    def destroy_graph(self, params):
+        visited = set()
+        def delete_values(v):
+            if v not in visited:
+                visited.add(v)
+                for child in v._prev:
+                    delete_values(child)
+                v._prev = set()
+                v._backward = lambda: None
+                if v not in params:
+                    del v
+        
+        delete_values(self)
 
     def __neg__(self): # -self
         return self * -1

@@ -44,23 +44,42 @@ def train_linear(x: List[List[Value]], y: List[Value], num_classes: int,
     criterion = CrossEntropyLoss(num_classes)
     optimizer = SGD()
 
-    for epoch in range(epochs):
-        # forward
-        for x_, y_ in zip(x, y):
-            pred = model(x_)
-            print(pred)
-            print(y_)
-            loss = criterion(pred, y_)
-            print(f"Loss: {loss.data:.4f}")
+    print(f"Number of training parameters: {len(model.parameters())}")
+    for i, (x_, y_) in enumerate(zip(x, y)):
+        #if i > 5 : break
+        pred = model(x_)
+        # print(pred)
+        # print(y_)
+        loss = criterion(pred, y_)
+        print(f"Loss: {loss.data:.4f}")
 
-            # backward
-            loss.backward()
-            optimizer.step(model.parameters())
+        # backward
+        loss.backward()
+        print(f"Number of training parameters: {len(model.parameters())}")
+        # print(model.parameters())
+        optimizer.step(model.parameters())
 
-            # zero gradients
-            model.zero_grad()
+        # zero gradients
+        model.zero_grad()
+        loss.destroy_graph(model.parameters())
 
-        print(f"Epoch: {epoch + 1}/{epochs} | Loss: {loss.data:.4f}")
+    # for epoch in range(epochs):
+    #     # forward
+    #     for x_, y_ in zip(x, y):
+    #         pred = model(x_)
+    #         print(pred)
+    #         print(y_)
+    #         loss = criterion(pred, y_)
+    #         print(f"Loss: {loss.data:.4f}")
+
+    #         # backward
+    #         loss.backward()
+    #         optimizer.step(model.parameters())
+
+    #         # zero gradients
+    #         model.zero_grad()
+
+    #     print(f"Epoch: {epoch + 1}/{epochs} | Loss: {loss.data:.4f}")
 
 if __name__ == "__main__":
     # Create a dataset for classification
