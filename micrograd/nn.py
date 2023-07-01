@@ -67,6 +67,23 @@ class Linear(Module):
 
     def __repr__(self):
         return f"Linear layer of [{', '.join(str(n) for n in self.neurons)}]"
+    
+
+class Sequential(Module):
+
+    def __init__(self, *layers):
+        self.layers = layers
+
+    def __call__(self, x):
+        for layer in self.layers:
+            x = layer(x)
+        return x
+
+    def parameters(self):
+        return [p for layer in self.layers for p in layer.parameters()]
+
+    def __repr__(self):
+        return f"Sequential of [{', '.join(str(layer) for layer in self.layers)}]"
 
 class MLP(Module):
 
@@ -226,22 +243,6 @@ class MultiHeadAttention(Module):
 class LayerNorm(Module):
     #TODO
     pass
-
-class Sequential(Module):
-
-    def __init__(self, layers: List[Module]):
-        self.layers = layers
-
-    def __call__(self, x):
-        for layer in self.layers:
-            x = layer(x)
-        return x
-
-    def parameters(self):
-        return [p for layer in self.layers for p in layer.parameters()]
-
-    def __repr__(self):
-        return f"MLP of [{', '.join(str(layer) for layer in self.layers)}]"
 
 # class Embedding(Module):
 #     def __init__(self,vocab_size,n_embd):

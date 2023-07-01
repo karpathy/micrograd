@@ -11,7 +11,7 @@ root_directory = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(root_directory)
 
 from micrograd.engine import Value
-from micrograd.nn import Linear, Sigmoid, BinaryCrossEntropyLoss
+from micrograd.nn import Linear, Sigmoid, BinaryCrossEntropyLoss, Sequential
 from micrograd.optimizers import SGD
 
 from sklearn.datasets import load_iris
@@ -63,8 +63,11 @@ def create_dataset():
 def train_linear(x: List[List[Value]], y: List[Value],
                  in_neurons: int, nonlin=False, use_bias=True, 
                  epochs: int = 10, learning_rate: float = 0.01):
-    model = Linear(in_neurons, 1, nonlin=nonlin ,use_bias=use_bias)
-    activation = Sigmoid()
+    # model = Linear(in_neurons, 1, nonlin=nonlin ,use_bias=use_bias)
+    model = Sequential(Linear(in_neurons, 10, nonlin=True ,use_bias=use_bias),
+                       Linear(10, 1, nonlin=nonlin ,use_bias=use_bias),
+                       Sigmoid())
+    # activation = Sigmoid()
     print(f"Number of training parameters: {len(model.parameters())}")
         
     criterion = BinaryCrossEntropyLoss()
@@ -78,7 +81,7 @@ def train_linear(x: List[List[Value]], y: List[Value],
         for i, (x_, y_) in enumerate(zip(x, y)):
             pred = model(x_)
             # print(f"Linear: {pred[0].data}")
-            pred = activation(pred)
+            # pred = activation(pred)
             # print(f"Sigmoid {pred[0].data}")
             loss = criterion(pred, y_)
             loss_history[f"Epoch {epoch + 1}"].append(loss.data)
@@ -115,5 +118,5 @@ if __name__ == "__main__":
         train_labels.append([Value(label)])
     print(f"Number of instances {len(train_data)}")
     # Train a linear model
-    train_linear(train_data, train_labels, in_neurons=10, nonlin=False, epochs=10, learning_rate=0.003)
+    train_linear(train_data, train_labels, in_neurons=10, nonlin=False, epochs=100, learning_rate=0.003)
 
