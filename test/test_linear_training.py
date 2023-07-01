@@ -15,6 +15,7 @@ from micrograd.optimizers import SGD
 
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import OneHotEncoder
+from sklearn.utils import shuffle
 
 
 def create_dataset():
@@ -24,6 +25,9 @@ def create_dataset():
     # Extract the features (X) and target labels (y)
     X = iris.data
     y = iris.target.reshape(-1, 1)  # Reshape to column vector
+
+    # Shuffle the dataset
+    X, y = shuffle(X, y, random_state=42)
 
     # Convert the class labels to one-hot encodings
     encoder = OneHotEncoder()
@@ -36,11 +40,11 @@ def create_dataset():
     return X, y_one_hot
 
 
-
 def train_linear(x: List[List[Value]], y: List[Value], num_classes: int,
                  in_neurons: int, out_neurons: int, nonlin=False, use_bias=True, 
                  epochs: int = 10):
-    model = Linear(in_neurons, out_neurons, nonlin=nonlin ,use_bias=use_bias)    
+    model = Linear(in_neurons, out_neurons, nonlin=nonlin ,use_bias=use_bias)
+    print(f"Number of training parameters: {len(model.parameters())}")    
     criterion = CrossEntropyLoss(num_classes)
     optimizer = SGD()
 
@@ -55,8 +59,6 @@ def train_linear(x: List[List[Value]], y: List[Value], num_classes: int,
 
         # backward
         loss.backward()
-        print(f"Number of training parameters: {len(model.parameters())}")
-        # print(model.parameters())
         optimizer.step(model.parameters())
 
         # zero gradients

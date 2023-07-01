@@ -328,12 +328,21 @@ class Softmax(Module):
         self.num_classes = num_classes
         self.values=[Value(0) for _ in self.num_classes]
         self.sum_exp=Value(0)
-    def __call__(self,x):
-        for val in x.values:
+    def __call__(self, values):
+        for val in values:
             self.sum_exp+=val.exp()
-        for i in range(x.values):
-            self.values[i]=x.values[i].exp()/self.sum_exp
+        for i in range(values):
+            self.values[i]=values[i].exp()/self.sum_exp
         return self.values
+    
+class Sigmoid(Module):
+    def __init__(self):
+        pass
+    def __call__(self, values):
+        outs = []
+        for value in values:
+            outs.append(1 / (1 + (-value).exp()))
+        return outs
 
 class CrossEntropyLoss(Module):
     #TODO: check that everything is fine with logits vs self.logits, etc.
@@ -344,7 +353,7 @@ class CrossEntropyLoss(Module):
         self.epsilon = epsilon
         self.loss = Value(0)
         assert(self.reduction in ["mean","sum"])
-    def __call__(self,logits,values):
+    def __call__(self, logits, values):
         for logit, label in zip(logits,values):
             logit_clipped = logit.clip(self.epsilon,1-self.epsilon)
             self.loss+=-logit_clipped.log()*label
@@ -353,4 +362,16 @@ class CrossEntropyLoss(Module):
         return self.loss
 
 class BinaryCrossEntropyLoss(Module):
-    pass
+    
+    def __init__(self):
+        pass
+
+    def __call__(self, logit, label):
+        if isinstance(logit, list):
+            logit = logit[0]
+        if isinstance(label, list):
+            label = label[0]
+       
+        assert isinstance(logit, Value) and isinstance(label, Value)
+        return -label * logit.log() -(1 - label) * (1 - logit).log()
+       
