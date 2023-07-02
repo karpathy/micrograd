@@ -13,7 +13,8 @@ sys.path.append(root_directory)
 
 from micrograd.engine import Value
 from micrograd.nn import Linear, Sigmoid, BinaryCrossEntropyLoss, Sequential, Module, Softmax, CrossEntropyLoss
-from micrograd.optimizers import SGD
+from micrograd.optimizers import SGD, Adam
+from micrograd.metrics import Metrics
 
 from sklearn.datasets import load_iris
 from sklearn.utils import shuffle
@@ -114,31 +115,26 @@ def train_linear(x: List[List[Value]], y: List[Value],
     print(f"Number of training parameters: {len(model.parameters())}")
         
     # criterion = BinaryCrossEntropyLoss()
-    criterion = CrossEntropyLoss(3)
+    criterion = CrossEntropyLoss()
     optimizer = SGD(lr=learning_rate)
-    loss_history = {}
-    result_history = {}
+    # optimizer = Adam(lr=learning_rate)
+    metrics = Metrics(["loss", "accuracy"])
+    # loss_history = {}
+    # result_history = {}
 
     for epoch in range(epochs):
-        loss_history[f"Epoch {epoch + 1}"] = []
-        result_history[f"Epoch {epoch + 1}"] = []
+        # loss_history[f"Epoch {epoch + 1}"] = []
+        # result_history[f"Epoch {epoch + 1}"] = []
         for i, (x_, y_) in enumerate(zip(x, y)):
             pred = model(x_)
-            # print(f"After model: {pred}")
-            # pred = activation(pred)
-            # print(f"After softmax: {pred}")
-            # print(f"Labels: {y_}")
-            # print(f"Linear: {pred[0].data}")
-            # pred = activation(pred)
-            # print(f"Sigmoid {pred[0].data}")
             loss = criterion(pred, y_)
-            # print(f"Loss: {loss.data}")
-            loss_history[f"Epoch {epoch + 1}"].append(loss.data)
-            predicted_probs = [p.data for p in pred]
-            predicted_class = max(range(len(predicted_probs)), key=lambda i: predicted_probs[i])
-            labels_class = [l.data for l in y_]
-            labels_class = labels_class.index(1)
-            result_history[f"Epoch {epoch + 1}"].append([predicted_class, labels_class])
+            metrics.record(loss, pred, y_, epoch, i)
+            # loss_history[f"Epoch {epoch + 1}"].append(loss.data)
+            # predicted_probs = [p.data for p in pred]
+            # predicted_class = max(range(len(predicted_probs)), key=lambda i: predicted_probs[i])
+            # labels_class = [l.data for l in y_]
+            # labels_class = labels_class.index(1)
+            # result_history[f"Epoch {epoch + 1}"].append([predicted_class, labels_class])
             # result_history[f"Epoch {epoch + 1}"].append([pred[0].data, y_[0].data])
             # print(f"Loss: {loss.data:.4f}")
 
@@ -150,9 +146,10 @@ def train_linear(x: List[List[Value]], y: List[Value],
             model.zero_grad()
             loss.destroy_graph(model.parameters())
 
-        print(f"Epoch: {epoch + 1}/{epochs} | Loss: {calculate_mean_loss(loss_history, epoch + 1):.4f}" + 
-              f"| Accuracy: {calculate_accuracy(result_history, epoch + 1):.4f}")
-        print("--------------------------------------------------")
+        # print(f"Epoch: {epoch + 1}/{epochs} | Loss: {calculate_mean_loss(loss_history, epoch + 1):.4f}" + 
+        #       f"| Accuracy: {calculate_multiclass_accuracy(result_history, epoch + 1):.4f}")
+        # print("--------------------------------------------------")
+        metrics.report(epoch, epochs)
     save_model(model, "checkpoints/binary_classification/linear_model.pkl")
 
 

@@ -348,19 +348,19 @@ class Sigmoid(Module):
 
 class CrossEntropyLoss(Module):
     #TODO: check that everything is fine with logits vs self.logits, etc.
-    def __init__(self, num_classes, reduction="mean", epsilon=1e-8):
+    def __init__(self, reduction="mean", epsilon=1e-8):
         #only supporting unweighted cross-entropy loss
-        self.num_classes=num_classes
         self.reduction = reduction
         self.epsilon = epsilon
         assert(self.reduction in ["mean","sum"])
     def __call__(self, logits, values):
         loss = Value(0)
+        num_classes = len(values)
         for logit, label in zip(logits,values):
             logit_clipped = logit.clip(self.epsilon,1-self.epsilon)
             loss-=logit_clipped.log()*label
         if self.reduction=="mean":
-            return loss/self.num_classes
+            return loss/num_classes
         return loss
 
 class BinaryCrossEntropyLoss(Module):
