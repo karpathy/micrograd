@@ -325,16 +325,17 @@ class LayerNorm(Module):
 
 class Softmax(Module):
     #TODO: use more numerically stable version where we divide everything by max value
-    def __init__(self, num_classes):
-        self.num_classes = num_classes
-        self.values=[Value(0) for _ in self.num_classes]
-        self.sum_exp=Value(0)
+    def __init__(self):
+        pass
+
     def __call__(self, values):
+        sum_exp = Value(0)
+        out_values = []
         for val in values:
-            self.sum_exp+=val.exp()
-        for i in range(values):
-            self.values[i]=values[i].exp()/self.sum_exp
-        return self.values
+            sum_exp+=val.exp()
+        for val in values:
+            out_values.append(val.exp()/sum_exp)
+        return out_values
     
 class Sigmoid(Module):
     def __init__(self):
@@ -352,15 +353,15 @@ class CrossEntropyLoss(Module):
         self.num_classes=num_classes
         self.reduction = reduction
         self.epsilon = epsilon
-        self.loss = Value(0)
         assert(self.reduction in ["mean","sum"])
     def __call__(self, logits, values):
+        loss = Value(0)
         for logit, label in zip(logits,values):
             logit_clipped = logit.clip(self.epsilon,1-self.epsilon)
-            self.loss+=-logit_clipped.log()*label
+            loss-=logit_clipped.log()*label
         if self.reduction=="mean":
-            return self.loss/self.num_classes
-        return self.loss
+            return loss/self.num_classes
+        return loss
 
 class BinaryCrossEntropyLoss(Module):
     
