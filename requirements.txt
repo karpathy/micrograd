@@ -1,0 +1,5 @@
+dill==0.3.6
+numpy==1.23.5
+scikit_learn==1.2.0
+setuptools==65.6.3
+torch==1.13.1

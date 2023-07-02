@@ -11,11 +11,12 @@ root_directory = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Add the root directory to the Python module search path
 sys.path.append(root_directory)
 
+import config
 from micrograd.engine import Value
 from micrograd.nn import Linear, Sigmoid, BinaryCrossEntropyLoss, Sequential, Module, Softmax, CrossEntropyLoss
 from micrograd.optimizers import SGD, Adam
 from micrograd.metrics import Metrics
-from micrograd.training import train, test, inference 
+from micrograd.training import train, test
 
 from sklearn.utils import shuffle
 from sklearn.preprocessing import OneHotEncoder
@@ -70,7 +71,7 @@ def create_dataset():
     X, y = shuffle(X, y, random_state=42)
 
     # Create an instance of OneHotEncoder
-    encoder = OneHotEncoder(sparse=False)
+    encoder = OneHotEncoder(sparse_output=False)
 
     # Reshape the labels list into a 2D array
     y_2d = [[label] for label in y]
@@ -103,16 +104,40 @@ def create_directories(experiment_name: str):
     return os.path.join(root_directory, "experiments", experiment_name)
 
 
-def run_traning():
-    model = create_mlp_model(5, [10, 10], 3)
-    optimizer = create_optimizer("sgd", 0.03)
-    criterion = create_criteria("ce")
-    metrics = create_metrics(["loss", "accuracy"])
+def run_traning() -> Sequential:
+    model = None
+    if config.load_model:
+        with open(config.load_path, 'rb') as f:
+            model = dill.load(f)
+            print(model)
+    else:
+        model = create_mlp_model(config.input_size, config.hidden_size, config.output_size)
+    optimizer = create_optimizer(config.optimizer, config.learning_rate)
+    criterion = create_criteria(config.loss)
+    metrics = create_metrics(config.metrics)
     x, y = create_dataset()
-    experiment_name = "mlp_classification"
+    experiment_name = config.experiment_name
     model_name = experiment_name + '-{date:%Y-%m-%d_%H:%M:%S}.txt'.format(date=datetime.datetime.now()) + ".pkl"
     save_path = create_directories(experiment_name)
-    train(x, y, model, criterion, optimizer, metrics, epochs=30, save_path=save_path, model_name=model_name)
+    return train(x, y, model, criterion, optimizer, metrics, epochs=config.epochs, save_path=save_path, model_name=model_name)
+
+def run_testing(model: Sequential = None):
+    if model is None: 
+        if config.load_model:
+            with open(config.load_path, 'rb') as f:
+                model = dill.load(f)
+                print(model)
+        else:
+            raise ValueError("No model provided")
+    criterion = create_criteria(config.loss)
+    metrics = create_metrics(config.metrics)
+    x, y = create_dataset()
+    test(x, y, model, criterion, metrics)
+        
 
 if __name__ == "__main__":
-    run_traning()   
+    model = None
+    if config.run_training:
+        model = run_traning()   
+    if config.run_testing:
+        run_testing(model)

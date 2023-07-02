@@ -28,7 +28,7 @@ def load_model(path: str) -> Module:
         return model
 
 def train(x: List[List[Value]], y: List[Value], model: Sequential, criterion: Module, optimizer,
-           metrics: Metrics, epochs: int = 10, save_path: str = None, model_name: str = "model.pkl"):
+           metrics: Metrics, epochs: int = 10, save_path: str = None, model_name: str = "model.pkl") -> Sequential:
     
     print(f"Number of training parameters: {len(model.parameters())}")
 
@@ -47,6 +47,8 @@ def train(x: List[List[Value]], y: List[Value], model: Sequential, criterion: Mo
         metrics.report(epoch, epochs)
     save_model(model, os.path.join(save_path, model_name))
 
+    return model
+
 
 def test(x: List[List[Value]], y: List[Value], model: Sequential, criterion: Module, metrics: Metrics):
     for i, (x_, y_) in enumerate(zip(x, y)):
@@ -56,14 +58,5 @@ def test(x: List[List[Value]], y: List[Value], model: Sequential, criterion: Mod
         loss.destroy_graph(model.parameters())
     metrics.report(0, 1)
 
-
-def inference(x: List[List[Value]], model: Sequential) -> List[float]:
-    results = []
-    for i, x_ in enumerate(x):
-        pred = model(x_)
-        results.append(pred.data)
-
-    return results
-    
 
 
