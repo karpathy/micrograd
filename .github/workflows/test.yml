@@ -1,0 +1,28 @@
+name: Run the tests please
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+# - uses: actions/setup-python@v4
+#   with:
+#     python-version: '3.10'
+
+jobs:
+  do_the_build_please:
+    runs-on: ubuntu-20.04
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install python3.8
+      run: sudo apt install -y python3.8 python3.8-venv
+
+    - name: Run tests
+      run: |
+        python3.8 -m venv env
+        source env/bin/activate
+        pip install pytest torch
+        pytest
