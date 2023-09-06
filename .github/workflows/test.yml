@@ -20,9 +20,15 @@ jobs:
     - name: Install python3.8
       run: sudo apt install -y python3.8 python3.8-venv
 
-    - name: Run tests
+    - name: Build venv
+      run: python3.8 -m venv env
+
+    - name: Install deps
       run: |
-        python3.8 -m venv env
         source env/bin/activate
         pip install pytest torch
+
+    - name: Run tests
+      run: |
+        source env/bin/activate
         pytest
