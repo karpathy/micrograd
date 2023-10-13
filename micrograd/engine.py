@@ -64,6 +64,9 @@ class Value:
                 topo.append(v)
         build_topo(self)
 
+        # reset gradients to ensure they don't get repeatedly accumulated
+        # for v in reversed(topo):
+        #     v.grad = 0
         # go one variable at a time and apply the chain rule to get its gradient
         self.grad = 1
         for v in reversed(topo):
