@@ -25,6 +25,16 @@ class Value:
         self._k = 0
         self.refresh = self.__refresh_value
 
+    def assign(self, value: float) -> None:
+        self.data = value
+        self.grad = 0.0
+        self._backward = lambda: None
+        self._lhs = None
+        self._rhs = None
+        self._op = ''
+        self._k = 0
+        self.refresh = self.__refresh_value
+
     def __refresh_value(self, k: int) -> float:
         if self._k < k:
             self._k = k
