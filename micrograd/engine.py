@@ -79,7 +79,7 @@ class Value:
         return self + (-other)
 
     def __rsub__(self, other): # other - self
-        return other + (-self)
+        return (-self) + other
 
     def __rmul__(self, other): # other * self
         return self * other
@@ -88,7 +88,7 @@ class Value:
         return self * other**-1
 
     def __rtruediv__(self, other): # other / self
-        return other * self**-1
+        return (self**-1) * other
 
     def __repr__(self):
         return f"Value(data={self.data}, grad={self.grad})"
