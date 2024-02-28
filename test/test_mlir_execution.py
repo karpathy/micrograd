@@ -16,16 +16,7 @@ faulthandler.enable()
 
 def transform(mod):
     pm = PassManager("builtin.module", context=mod.context)
-    pm.add("func.func(convert-linalg-to-loops)")
-    pm.add("func.func(lower-affine)")
-    pm.add("func.func(convert-math-to-llvm)")
-    pm.add("func.func(convert-scf-to-cf)")
-    pm.add("func.func(arith-expand)")
-    pm.add("func.func(memref-expand)")
-    pm.add("convert-vector-to-llvm")
-    pm.add("finalize-memref-to-llvm")
-    pm.add("convert-func-to-llvm")
-    pm.add("reconcile-unrealized-casts")
+    pm.add("convert-to-llvm")
     pm.run(mod.operation)
     return mod
 
