@@ -7,33 +7,30 @@ from mlir.ir import Context, Location, InsertionPoint, Module
 from mlir.execution_engine import ExecutionEngine
 from mlir.passmanager import PassManager
 from mlir import ir
-import sys
 from typing import Union
 import math
 import ctypes
-import random
 
 
 class Compiler:
+    """Compile a micrograd computation Value graph to MLIR arithmetic dialect."""
+
     def __init__(self, compiled_values={}):
         self.compiled_values = compiled_values
 
-    def walk(self, value: Value):
+    def walk(self, value: Value) -> ir.Value:
         if value in self.compiled_values:
             return self.compiled_values[value]
         match value._op:
-            case '':
-                return arith.constant(
-                    value=float(
-                        value.data),
-                    result=ir.F32Type.get())
-            case '*':
+            case "":
+                return arith.constant(value=float(value.data), result=ir.F32Type.get())
+            case "*":
                 lhs, rhs = value._prev
                 return arith.mulf(self.walk(lhs), self.walk(rhs))
-            case '+':
+            case "+":
                 lhs, rhs = value._prev
                 return arith.addf(self.walk(lhs), self.walk(rhs))
-            case 'ReLU':
+            case "ReLU":
                 (item,) = value._prev
                 return arith.maximumf(self.walk(Value(0.0)), self.walk(item))
         if "**" in value._op:
@@ -65,11 +62,11 @@ def _compile(net: Union[Value, Neuron, Layer, MLP]):
         if isinstance(net_value, list):
             return [compiler.walk(value) for value in net_value]
         return compiler.walk(net_value)
+
     main.func_op.attributes["llvm.emit_c_interface"] = ir.UnitAttr.get()
 
 
-def _compile_standalone(
-        net: Union[Value, Neuron, Layer, MLP]) -> ir.Module:
+def _compile_standalone(net: Union[Value, Neuron, Layer, MLP]) -> ir.Module:
     with Context(), Location.unknown():
         module = Module.create()
         with InsertionPoint(module.body):
@@ -77,22 +74,42 @@ def _compile_standalone(
         return module
 
 
-def _transform(mod):
+def _lower_to_llvm(mod: ir.Module) -> ir.Module:
+    """Lower the MLIR module to LLVM.
+
+    The assumption is that the module only uses standard
+    dialects that can be lowered to LLVM.
+    """
     pm = PassManager("builtin.module", context=mod.context)
     pm.add("convert-to-llvm")
     pm.run(mod.operation)
     return mod
 
 
-def jit(net: Union[Value, Neuron, Layer, MLP]):
-    m = _compile_standalone(net)
-    execution_engine = ExecutionEngine(_transform(m))
+class JittedNet:
+    def __init__(
+        self,
+        net: Union[Value, Neuron, Layer, MLP],
+        m: ir.Module,
+        execution_engine: ExecutionEngine,
+    ):
+        self.net = net
+        self.m = m
+        self.execution_engine = execution_engine
 
-    def jitted_net(x=None):
+    def __call__(self, x=None):
         c_float_p = ctypes.c_float * 1
-        xs = [] if isinstance(net, Value) else x
+        xs = [] if isinstance(self.net, Value) else x
         args = [c_float_p(v) for v in xs]
         res = c_float_p(-1.0)
-        execution_engine.invoke("main", *args, res)
+        self.execution_engine.invoke("main", *args, res)
         return res[0]
-    return jitted_net
+
+    def __str__(self):
+        return str(self.m)
+
+
+def jit(net: Union[Value, Neuron, Layer, MLP]):
+    m = _compile_standalone(net)
+    execution_engine = ExecutionEngine(_lower_to_llvm(m))
+    return JittedNet(net, m, execution_engine)
