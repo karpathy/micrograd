@@ -17,7 +17,8 @@ class MLIRVisitor:
             with InsertionPoint(module.body):
                 @func.func()
                 def main():
-                    return arith.fptosi(ir.IntegerType.get_signless(32), self.walk(value))
+                    return self.walk(value)
+                main.func_op.attributes["llvm.emit_c_interface"] = ir.UnitAttr.get()
             return module
         
     def walk(self, value: Value):
@@ -36,4 +37,3 @@ class MLIRVisitor:
         if "**" in value._op:
             base, exp = value._prev
             return math.powf(self.walk(base), self.walk(exp))
-            
