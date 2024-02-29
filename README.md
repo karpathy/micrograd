@@ -64,6 +64,14 @@ To run the unit tests you will have to install [PyTorch](https://pytorch.org/), 
 python -m pytest
 ```
 
+### Dependencies
+
+There is a `requirements.txt` with the necessary dependencies.
+
+```bash
+pip install -r requirements.txt
+```
+
 ### License
 
 MIT
