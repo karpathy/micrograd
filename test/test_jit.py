@@ -16,7 +16,7 @@ def test_value():
     c = a + b  # 6.
     d = a + c  # 10.
     jd = jit(d)
-    assert math.isclose(10., jd(), abs_tol=1e-04)
+    assert math.isclose(d.data, jd(), abs_tol=1e-04)
 
 
 def test_neuron():
@@ -24,7 +24,7 @@ def test_neuron():
     n.w = [2.]
     jn = jit(n)
     args = [10.0]
-    assert math.isclose(20., jn(args), abs_tol=1e-04)
+    assert math.isclose(n(args).data, jn(args), abs_tol=1e-04)
 
 
 def test_layer():
