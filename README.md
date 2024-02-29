@@ -72,6 +72,51 @@ There is a `requirements.txt` with the necessary dependencies.
 pip install -r requirements.txt
 ```
 
+### Just in Time Compilation
+
+This repository also contains a JIT compiler for the micrograd engine using [mlir](https://mlir.llvm.org/) which is then lowered to LLVM IR and executed with a provided
+CPU backend.
+
+```python
+def test_value():
+    a = Value(4.0)
+    b = Value(2.0)
+    c = a + b  # 6.
+    d = a + c  # 10.
+    jd = jit(d)
+    assert math.isclose(d.data, jd(), abs_tol=1e-04)
+
+def test_mlp():
+    random.seed(10)
+    nn = MLP(nin=2, nouts=[1])
+    jnn = jit(nn)
+    args = [-30., -20.]
+    assert math.isclose(nn(args).data, jnn(args), abs_tol=1e-04)
+```
+
+You can also print the JIT object returned to see the corresponding MLIR IR.
+```python
+>>> from micrograd.engine import Value
+>>> from micrograd.jit import jit
+>>> a = Value(4.0)
+>>> b = Value(2.0)
+>>> c = a + b
+>>> jit_c = jit(c)
+>>> print(jit_c)
+module {
+  llvm.func @main() -> f32 attributes {llvm.emit_c_interface} {
+    %0 = llvm.mlir.constant(4.000000e+00 : f32) : f32
+    %1 = llvm.mlir.constant(2.000000e+00 : f32) : f32
+    %2 = llvm.mlir.constant(6.000000e+00 : f32) : f32
+    llvm.return %2 : f32
+  }
+  llvm.func @_mlir_ciface_main() -> f32 attributes {llvm.emit_c_interface} {
+    %0 = llvm.call @main() : () -> f32
+    llvm.return %0 : f32
+  }
+}
+```
+
 ### License
 
 MIT

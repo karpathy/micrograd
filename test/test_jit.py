@@ -1,6 +1,4 @@
-import sys
 import math
-import ctypes
 import random
 from micrograd.engine import Value
 from micrograd.nn import Neuron, Layer, MLP

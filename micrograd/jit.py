@@ -7,18 +7,20 @@ from mlir.ir import Context, Location, InsertionPoint, Module
 from mlir.execution_engine import ExecutionEngine
 from mlir.passmanager import PassManager
 from mlir import ir
-from typing import Union
+from typing import Union, Optional
 import math
-import ctypes
+from ctypes import c_float, byref
 
 
 class Compiler:
-    """Compile a micrograd computation Value graph to MLIR arithmetic dialect."""
+    """Compiler for a micrograd computation Value graph to MLIR arithmetic dialect."""
 
     def __init__(self, compiled_values={}):
         self.compiled_values = compiled_values
 
     def walk(self, value: Value) -> ir.Value:
+        """Walk the Value graph and convert it an isomorphic MLIR arithmetic dialect graph."""
+
         if value in self.compiled_values:
             return self.compiled_values[value]
         match value._op:
@@ -80,8 +82,7 @@ def _lower_to_llvm(mod: ir.Module) -> ir.Module:
     The assumption is that the module only uses standard
     dialects that can be lowered to LLVM.
     """
-    pm = PassManager("builtin.module", context=mod.context)
-    pm.add("convert-to-llvm")
+    pm = PassManager.parse("builtin.module(convert-to-llvm)", context=mod.context)
     pm.run(mod.operation)
     return mod
 
@@ -97,19 +98,26 @@ class JittedNet:
         self.m = m
         self.execution_engine = execution_engine
 
-    def __call__(self, x=None):
-        c_float_p = ctypes.c_float * 1
+    def __call__(self, x: Optional[list[float]] = None):
+        if isinstance(self.net, Value) and x != None:
+            raise "You should not pass any arguments to a Value."
         xs = [] if isinstance(self.net, Value) else x
-        args = [c_float_p(v) for v in xs]
-        res = c_float_p(-1.0)
-        self.execution_engine.invoke("main", *args, res)
-        return res[0]
+        args = [byref(c_float(v)) for v in xs]
+        res = c_float(-1.0)
+        self.execution_engine.invoke("main", *args, byref(res))
+        return res.value
 
     def __str__(self):
         return str(self.m)
 
 
-def jit(net: Union[Value, Neuron, Layer, MLP]):
+def jit(net: Union[Value, Neuron, Layer, MLP]) -> JittedNet:
+    """Given a micrograd computation graph, compile it to MLIR and then to LLVM.
+
+    You can also print the returned object to see the MLIR module.
+
+    @return: a callable that takes the input arguments of the computation graph
+    """
     m = _compile_standalone(net)
     execution_engine = ExecutionEngine(_lower_to_llvm(m))
     return JittedNet(net, m, execution_engine)
