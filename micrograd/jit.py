@@ -9,7 +9,7 @@ from mlir.passmanager import PassManager
 from mlir import ir
 from typing import Union, Optional
 import math
-from ctypes import c_float, byref
+from ctypes import c_float, byref, pointer
 
 
 class Compiler:
@@ -50,6 +50,13 @@ def _get_args_num(net: Union[Value, Neuron, Layer, MLP]) -> int:
     assert isinstance(net, Value)
     return 0
 
+def _get_results_num(net: Union[Value, Neuron, Layer, MLP]) -> int:
+    if isinstance(net, Layer):
+        return len(net.neurons)
+    if isinstance(net, MLP):
+        return _get_results_num(net.layers[-1])
+    assert isinstance(net, Value) or isinstance(net, Neuron)
+    return 1
 
 def _compile(net: Union[Value, Neuron, Layer, MLP]):
     args_num = _get_args_num(net)
@@ -102,10 +109,22 @@ class JittedNet:
         if isinstance(self.net, Value) and x != None:
             raise "You should not pass any arguments to a Value."
         xs = [] if isinstance(self.net, Value) else x
+
         args = [byref(c_float(v)) for v in xs]
-        res = c_float(-1.0)
-        self.execution_engine.invoke("main", *args, byref(res))
-        return res.value
+
+        num_results = _get_results_num(self.net)
+        FloatResultArrayType = (c_float * num_results)
+        res = FloatResultArrayType(-1)
+
+        # Why is this a double pointer?
+        # no clue...
+        if num_results == 1:
+            args = args + [byref(res)]
+        else:
+            args = [pointer(pointer(res))] + args
+
+        self.execution_engine.invoke("main", *args, res)
+        return res[0] if num_results == 1 else [res[i] for i in range(num_results)]
 
     def __str__(self):
         return str(self.m)
