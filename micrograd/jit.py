@@ -1,3 +1,10 @@
+"""This is a small JIT compiler for micrograd computation graphs using MLIR.
+
+The MLIR is lowered to LLVM IR and then executed using an LLVM JIT engine.
+The comments in the file are meant to be liberal as this is a demonstration
+and learning project.
+"""
+
 from micrograd.engine import Value
 from micrograd.nn import Neuron, Layer, MLP
 import mlir.dialects.arith as arith
@@ -50,6 +57,7 @@ def _get_args_num(net: Union[Value, Neuron, Layer, MLP]) -> int:
     assert isinstance(net, Value)
     return 0
 
+
 def _get_results_num(net: Union[Value, Neuron, Layer, MLP]) -> int:
     if isinstance(net, Layer):
         return len(net.neurons)
@@ -58,14 +66,31 @@ def _get_results_num(net: Union[Value, Neuron, Layer, MLP]) -> int:
     assert isinstance(net, Value) or isinstance(net, Neuron)
     return 1
 
+
 def _compile(net: Union[Value, Neuron, Layer, MLP]):
+    """Adds the main method to a MLIR module.
+
+    This function assumes it is called within a context and insertion point.
+    """
     args_num = _get_args_num(net)
     args_types = [ir.F32Type.get()] * args_num
     args_values = [Value(0) for _ in range(args_num)]
 
     @func.func(*args_types)
     def main(*args):
+        # This is a bit of a hack to figure out the computation graph.
+        # Rather than model the various remaining types such as
+        # Neuron, Layer, and MLP, we instead execute the computation
+        # and since the result is a Value it encodes the whole graph.
+        # This is OK since the point of JIT is to speedup subsequent
+        # executions.
         net_value = net if isinstance(net, Value) else net(args_values)
+        # The computation graph earlier was created with seed values of Value(0).
+        # We now need to replace these with the actual arguments provided to the
+        # MLIR main function.
+        # We accomplish this by creating a mapping from the seed values to the
+        # compiled arguments (cv). The walk method will replace the seed values
+        # when traversing the graph wth the actual arguments
         compiled_values = {v: cv for v, cv in zip(args_values, args)}
         compiler = Compiler(compiled_values)
         if isinstance(net_value, list):
@@ -113,11 +138,14 @@ class JittedNet:
         args = [byref(c_float(v)) for v in xs]
 
         num_results = _get_results_num(self.net)
-        FloatResultArrayType = (c_float * num_results)
+        FloatResultArrayType = c_float * num_results
         res = FloatResultArrayType(-1)
 
-        # Why is this a double pointer?
-        # no clue...
+        # ExecutionEngine has odd semantics if an argument is a pointer.
+        # Some networks can return a single value, others a list.
+        # This also changes the type of MLIR that is lowered to LLVM such that the
+        # return value must be in argument to the function now.
+        # https://github.com/llvm/llvm-project/issues/83599
         if num_results == 1:
             args = args + [byref(res)]
         else:
