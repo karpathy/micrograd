@@ -123,7 +123,7 @@ class JittedNet:
         else:
             args = [pointer(pointer(res))] + args
 
-        self.execution_engine.invoke("main", *args, res)
+        self.execution_engine.invoke("main", *args)
         return res[0] if num_results == 1 else [res[i] for i in range(num_results)]
 
     def __str__(self):
