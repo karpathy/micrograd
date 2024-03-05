@@ -58,6 +58,7 @@ class Value:
         visited = set()
         def build_topo(v):
             if v not in visited:
+                v.grad = 0.0
                 visited.add(v)
                 for child in v._prev:
                     build_topo(child)
