@@ -71,3 +71,22 @@ python -m pytest
 ### License
 
 MIT
+## New Feature: Simple Usage Example
+
+Micrograd is a simple automatic
+differentiation engine.
+
+### Example
+
+```python
+from micrograd.engine import Value
+
+a = Value(2.0)
+b = Value(3.0)
+
+c = a + b
+
+print(c.data)
+```
+
+**Output:** `5.0`
